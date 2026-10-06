@@ -1,0 +1,11 @@
+rules:
+  - id: ARCH-301
+    title: Contexts depend on each other only through published interfaces along domain-map relations
+    level: must
+    checks:
+      - target: code
+        kind: context_boundaries
+        files: ["src/**"]
+      - target: edit
+        kind: context_boundaries
+        files: ["src/**"]

@@ -1,0 +1,19 @@
+# Written by the formal handover from the BA specification tool to Spec Kit. Read-only for agents.
+handover_version: 1
+source:
+  producer: ba-spec-tool
+  version: "3"
+  sha256: "803b2ac1ecefaf1b7cba4922a6146300511a013ead43b4ec8c96d574f8a4c71e"
+domain:
+  map_version: "1.4.0"
+use_cases:
+  UC-001: orders
+items:
+  SC-001: orders
+  AC-001: orders
+  AC-002: orders
+  BR-001: orders
+  BR-002: orders
+data:
+  D-001: { entity: Order, context: orders }
+scope: [UC-001, SC-001, AC-001, AC-002, BR-001, BR-002, D-001]

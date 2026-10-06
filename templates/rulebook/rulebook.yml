@@ -1,0 +1,11 @@
+# rulebook.yml - the standards repository (architecture standards as skills).
+# Tag every release; projects pin "<name>@<tag>" in archiguard-config.yml (standards.rulebook).
+name: example-standards
+version: v0.1.0
+
+# Optional: extra or replaced stack markers (Applies-when). Defaults: java, node, python, dotnet, go, cobol.
+# stacks:
+#   java: [pom.xml, build.gradle, build.gradle.kts]
+
+# Reasons a plan may give for "not applicable" in its Architecture Conformance table (A3.3).
+not_applicable_reasons: [no-persistence, no-external-interface, no-ui, no-messaging, no-batch, read-only, no-personal-data, no-new-component]

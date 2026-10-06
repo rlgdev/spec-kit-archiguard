@@ -1,0 +1,6 @@
+# Owned by the service team that publishes archiGuard to the internal catalog.
+# Projects cannot change it: Spec Kit replaces the extension directory on every update.
+
+# Highest iteration budget a project may configure for any step or loop.
+# A project may lower its budgets in archiguard-config.yml, never exceed this ceiling.
+max_iterations_ceiling: 6

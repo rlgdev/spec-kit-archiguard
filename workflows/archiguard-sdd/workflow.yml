@@ -1,0 +1,203 @@
+schema_version: "1.0"
+workflow:
+  id: "archiguard-sdd"
+  name: "Design and implement under archiGuard gates"
+  version: "0.1.0"
+  author: "rlgdev"
+  description: "plan -> tasks -> analyze (A3.6) -> design authority sign-off -> implement <-> converge -> handover 4->5 -> deterministic test loop -> compliance report -> PR approval. Starts after the formal handover from the BA specification tool to Spec Kit; requires the archiguard extension."
+
+requires:
+  speckit_version: ">=1.0.1"
+
+inputs:
+  feature:
+    type: string
+    required: true
+    prompt: "Feature directory written by the formal handover, e.g. specs/001-orders"
+  integration:
+    type: string
+    default: "auto"
+    prompt: "Integration to use ('auto' uses the project's initialized integration)"
+  archiguard:
+    type: string
+    default: "bash .specify/extensions/archiguard/scripts/bash/archiguard.sh"
+    prompt: "archiGuard launcher (Windows: pwsh -File .specify/extensions/archiguard/scripts/powershell/archiguard.ps1)"
+  design_authority:
+    type: string
+    required: true
+    prompt: "Design authority (tech lead) who signs the plan"
+  design_verdict:
+    type: string
+    enum: ["", "approve", "reject"]
+    default: ""
+  pr_verdict:
+    type: string
+    enum: ["", "approve", "reject"]
+    default: ""
+
+# Every shell step is a hard stop inside the run: a red verdict fails the step and the run.
+# Loop bounds come from archiguard-config.yml (loops:); archiGuard counts the red runs and exits 3
+# (escalation note written) on the first red run past the bound. The literal max_iterations below is
+# only a backstop - the package ceiling (6) plus the escalating run - because Spec Kit does not accept
+# an expression there.
+steps:
+  - id: domain-guard
+    type: shell
+    run: "{{ inputs.archiguard }} check A0 A0.1 A0.2 A0.3 --feature-dir {{ inputs.feature }}"
+
+  - id: plan
+    command: speckit.plan
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "Plan the feature in {{ inputs.feature }}"
+
+  - id: verify-plan
+    type: shell
+    run: "{{ inputs.archiguard }} verify plan --feature-dir {{ inputs.feature }}"
+
+  - id: tasks
+    command: speckit.tasks
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "Generate the tasks for {{ inputs.feature }}"
+
+  - id: verify-tasks
+    type: shell
+    run: "{{ inputs.archiguard }} verify tasks --feature-dir {{ inputs.feature }}"
+
+  - id: analyze
+    command: speckit.analyze
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "Analyze {{ inputs.feature }}"
+
+  - id: analyze-gate
+    type: shell
+    run: "{{ inputs.archiguard }} check A3 A3.6 --feature-dir {{ inputs.feature }}"
+
+  - id: design-signoff
+    type: gate
+    message: "Design authority: sign the plan on the evidence in {{ inputs.feature }}/gates (plan-verify.json, tasks-verify.json, A3/A3.6.json) and the cited ADRs."
+    options: [approve, reject]
+    on_reject: abort
+    verdict_input: design_verdict
+
+  - id: commit-design
+    type: shell
+    run: "git add -A -- {{ inputs.feature }} && (git diff --cached --quiet || git commit -q -m \"Design of {{ inputs.feature }} for the design authority sign-off\")"
+
+  - id: record-signoff
+    type: shell
+    run: "{{ inputs.archiguard }} signoff --feature-dir {{ inputs.feature }} --by \"{{ inputs.design_authority }}\""
+
+  - id: commit-signoff
+    type: shell
+    run: "git add -- {{ inputs.feature }}/gates/signoff.json && git commit -q -m \"Design sign-off of {{ inputs.feature }} by {{ inputs.design_authority }}\""
+
+  - id: implement
+    command: speckit.implement
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "Implement {{ inputs.feature }}"
+
+  - id: converge-reset
+    type: shell
+    run: "{{ inputs.archiguard }} loop implement_converge --reset --feature-dir {{ inputs.feature }}"
+
+  - id: converge-loop
+    type: do-while
+    condition: "{{ steps.converge-check.output.exit_code == 1 }}"
+    max_iterations: 7
+    steps:
+      - id: converge
+        command: speckit.converge
+        integration: "{{ inputs.integration }}"
+        input:
+          args: "Converge {{ inputs.feature }}"
+      - id: converge-check
+        type: shell
+        run: "{{ inputs.archiguard }} loop implement_converge --feature-dir {{ inputs.feature }} -- check A4 A4.5"
+        continue_on_error: true
+      - id: converge-fix
+        type: if
+        condition: "{{ steps.converge-check.output.exit_code == 1 }}"
+        then:
+          - id: implement-convergence
+            command: speckit.implement
+            integration: "{{ inputs.integration }}"
+            input:
+              args: "Execute only the open Convergence phase tasks of {{ inputs.feature }}"
+
+  - id: converge-final
+    type: shell
+    run: "{{ inputs.archiguard }} loop implement_converge --status --feature-dir {{ inputs.feature }}"
+
+  - id: verify-implement
+    type: shell
+    run: "{{ inputs.archiguard }} verify implement --feature-dir {{ inputs.feature }}"
+
+  - id: handover-reset
+    type: shell
+    run: "{{ inputs.archiguard }} loop handover_entry --reset --feature-dir {{ inputs.feature }}"
+
+  - id: handover-loop
+    type: do-while
+    condition: "{{ steps.handover-check.output.exit_code == 1 }}"
+    max_iterations: 7
+    steps:
+      - id: handover-check
+        type: shell
+        run: "{{ inputs.archiguard }} loop handover_entry --feature-dir {{ inputs.feature }} -- handover"
+        continue_on_error: true
+      - id: handover-fix
+        type: if
+        condition: "{{ steps.handover-check.output.exit_code == 1 }}"
+        then:
+          - id: implement-handover
+            command: speckit.implement
+            integration: "{{ inputs.integration }}"
+            input:
+              args: "Fix the handover 4->5 entry checks listed in {{ inputs.feature }}/gates/handover-4-5.json"
+
+  - id: handover-final
+    type: shell
+    run: "{{ inputs.archiguard }} loop handover_entry --status --feature-dir {{ inputs.feature }}"
+
+  - id: test-reset
+    type: shell
+    run: "{{ inputs.archiguard }} loop test_loop --reset --feature-dir {{ inputs.feature }}"
+
+  - id: test-loop
+    type: do-while
+    condition: "{{ steps.test-run.output.exit_code == 1 }}"
+    max_iterations: 7
+    steps:
+      - id: test-run
+        type: shell
+        run: "{{ inputs.archiguard }} loop test_loop --feature-dir {{ inputs.feature }} -- test"
+        timeout: 3600
+        continue_on_error: true
+      - id: test-fix
+        type: if
+        condition: "{{ steps.test-run.output.exit_code == 1 }}"
+        then:
+          - id: implement-tests
+            command: speckit.implement
+            integration: "{{ inputs.integration }}"
+            input:
+              args: "Fix the failing tests listed in {{ inputs.feature }}/gates/test-loop.json - fix the implementation, not the tests"
+
+  - id: test-final
+    type: shell
+    run: "{{ inputs.archiguard }} loop test_loop --status --feature-dir {{ inputs.feature }}"
+
+  - id: report
+    type: shell
+    run: "{{ inputs.archiguard }} report --save --feature-dir {{ inputs.feature }}"
+
+  - id: pr-approval
+    type: gate
+    message: "Tech lead: approve the pull request on the evidence ({{ inputs.feature }}/gates/architecture-compliance.md, test-loop.json). QA lead: sign the test exit."
+    options: [approve, reject]
+    on_reject: abort
+    verdict_input: pr_verdict

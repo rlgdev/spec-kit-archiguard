@@ -1,0 +1,6 @@
+# A profile is the named rule set a project picks (standards.profile); owned centrally.
+profile: java-service
+description: Java services exposing HTTP APIs
+skills: [api-contracts]
+# rules: [ARCH-...]      # single rules on top of the skills
+# extends: [base]        # another profile

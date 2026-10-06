@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-10-05T20:00:00Z",
+  "catalog_url": "https://raw.githubusercontent.com/rlgdev/spec-kit-archiguard/main/catalog/presets.json",
+  "presets": {
+    "archiguard-templates": {
+      "name": "archiGuard Templates",
+      "id": "archiguard-templates",
+      "version": "0.1.0",
+      "description": "Makes archiGuard's architecture gates mandatory steps of /speckit.plan, /speckit.tasks and /speckit.implement and adds the Integration Points, Architecture Conformance, Scope Coverage and Fitness sections to the templates.",
+      "author": "rlgdev",
+      "repository": "https://github.com/rlgdev/spec-kit-archiguard",
+      "download_url": "https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.1.0/archiguard-preset.zip",
+      "homepage": "https://github.com/rlgdev/spec-kit-archiguard",
+      "documentation": "https://github.com/rlgdev/spec-kit-archiguard/blob/main/preset/README.md",
+      "license": "Proprietary",
+      "requires": {
+        "speckit_version": ">=1.0.1"
+      },
+      "provides": {
+        "templates": 2,
+        "commands": 4
+      },
+      "tags": [
+        "architecture",
+        "governance",
+        "templates"
+      ],
+      "created_at": "2026-10-05T00:00:00Z",
+      "updated_at": "2026-10-05T20:00:00Z"
+    }
+  }
+}

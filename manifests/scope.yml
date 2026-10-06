@@ -1,0 +1,14 @@
+# The scopeGuard extension plugged in as the `scope` gate. scopeGuard stays a separate,
+# generic extension; archiGuard calls its command line and maps its JSON to verdicts.
+id: scope
+name: scope coverage (scopeGuard engine)
+version: 0.1.0
+implementation: external
+protocol: scopeguard
+description: >-
+  No requirement is dropped between spec, plan, tasks and implement.
+checks:
+  inventory: { name: scope inventory, target: spec, repairable: true, checker: false }
+  plan: { name: scope coverage spec -> plan, target: plan, repairable: true }
+  tasks: { name: scope coverage plan -> tasks, target: tasks, repairable: true }
+  implement: { name: carrying tasks done, target: tasks, repairable: true }

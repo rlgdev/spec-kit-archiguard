@@ -1,0 +1,56 @@
+schema_version: "1.0"
+
+preset:
+  id: "archiguard-templates"
+  name: "archiGuard Templates"
+  version: "0.1.0"
+  description: "Makes archiGuard's architecture gates mandatory steps of /speckit.plan, /speckit.tasks and /speckit.implement, saves the /speckit.analyze report for A3.6, and adds the Integration Points, Architecture Conformance, Scope Coverage and Fitness sections to the templates (pairs with the archiguard extension)"
+  author: "rlgdev"
+  repository: "https://github.com/rlgdev/spec-kit-archiguard"
+  license: "Proprietary"
+
+requires:
+  speckit_version: ">=1.0.1"
+
+provides:
+  templates:
+    - type: "template"
+      name: "plan-template"
+      file: "templates/plan-template.md"
+      description: "Adds Integration Points (A0.5), Architecture Conformance (A3.3) and Scope Coverage (scope gate) to plan.md"
+      strategy: "append"
+
+    - type: "template"
+      name: "tasks-template"
+      file: "templates/tasks-template.md"
+      description: "Adds the Fitness phase (A3.5 / A4.4) and the Scope Coverage mapping to tasks.md"
+      strategy: "append"
+
+    - type: "command"
+      name: "speckit.plan"
+      file: "commands/speckit.plan.md"
+      description: "Wraps /speckit.plan with archiGuard steps A and B (integration: inline)"
+      strategy: "wrap"
+
+    - type: "command"
+      name: "speckit.tasks"
+      file: "commands/speckit.tasks.md"
+      description: "Wraps /speckit.tasks with archiGuard steps A and B (integration: inline)"
+      strategy: "wrap"
+
+    - type: "command"
+      name: "speckit.implement"
+      file: "commands/speckit.implement.md"
+      description: "Wraps /speckit.implement with archiGuard steps A and B (integration: inline)"
+      strategy: "wrap"
+
+    - type: "command"
+      name: "speckit.analyze"
+      file: "commands/speckit.analyze.md"
+      description: "Saves the /speckit.analyze report as gates/analyze-report.md and runs the A3.6 check"
+      strategy: "wrap"
+
+tags:
+  - "architecture"
+  - "governance"
+  - "templates"

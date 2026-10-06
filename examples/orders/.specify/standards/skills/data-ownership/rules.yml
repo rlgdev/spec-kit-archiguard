@@ -1,0 +1,5 @@
+rules:
+  - id: ARCH-501
+    title: Every aggregate is written only by its owning context
+    level: must
+    targets: [plan]          # no declared check: the agent judges it, the design authority reviews it

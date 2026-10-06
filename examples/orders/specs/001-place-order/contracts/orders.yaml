@@ -1,0 +1,15 @@
+openapi: "3.0.3"
+info: { title: Orders API, version: "1.0" }
+paths:
+  /orders:
+    post:
+      summary: Place an order
+      responses: { "201": { description: created } }
+  /orders/{orderId}:
+    get:
+      summary: Read an order
+      responses: { "200": { description: ok } }
+components:
+  schemas:
+    Order: { type: object }
+    OrderLine: { type: object }

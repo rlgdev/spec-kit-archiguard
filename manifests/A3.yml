@@ -1,0 +1,15 @@
+id: A3
+name: plan conformance
+version: 0.1.0
+implementation: builtin
+description: >-
+  A plan reaches the design authority only when it covers the whole specification, shows how it
+  meets every applicable architecture rule, and records every deviation as an ADR.
+checks:
+  A3.1: { name: context loader, target: plan, repairable: true, checker: false }
+  A3.2: { name: scope coverage, target: plan, provided_by: scope.plan }
+  A3.3: { name: check-plan, target: plan, repairable: true }
+  A3.4: { name: constitution check, target: plan, repairable: true }
+  A3.5: { name: task guard, target: tasks, repairable: true }
+  A3.6: { name: analyze, target: tasks, repairable: true }
+  A3.7: { name: ledger check, target: plan, repairable: true }

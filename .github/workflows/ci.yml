@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SCOPEGUARD_TAG: v0.3.0
+
+jobs:
+  test:
+    name: tests (${{ matrix.os }}, py${{ matrix.python }}, ${{ matrix.yaml }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.9", "3.13"]
+        yaml: [builtin]
+        include:
+          - os: ubuntu-latest
+            python: "3.13"
+            yaml: pyyaml       # the engine prefers PyYAML when importable; the parity tests need it
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install pytest
+      - if: matrix.yaml == 'pyyaml'
+        run: python -m pip install pyyaml
+      - name: scopeGuard checkout for the integration test
+        shell: bash
+        run: git clone -q --depth 1 --branch "$SCOPEGUARD_TAG" https://github.com/rlgdev/spec-kit-scopeguard "$RUNNER_TEMP/scopeguard"
+      - name: pytest
+        shell: bash
+        run: SCOPEGUARD_SRC="$RUNNER_TEMP/scopeguard" python -m pytest -q -rs
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: python -m pip install pyflakes
+      - run: python -m pyflakes scripts/python tools tests
+      - run: shellcheck scripts/bash/archiguard.sh tools/e2e-speckit.sh
+
+  launchers:
+    name: launchers (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v5
+      - name: bash launcher on the example (expects 1, then 3)
+        shell: bash
+        working-directory: examples/orders
+        run: |
+          set +e
+          bash ../../scripts/bash/archiguard.sh run plan b; code=$?
+          test "$code" -eq 1 || { echo "expected exit 1, got $code"; exit 1; }
+          bash ../../scripts/bash/archiguard.sh run plan b; code=$?
+          test "$code" -eq 3 || { echo "expected escalation exit 3, got $code"; exit 1; }
+          test -f specs/001-place-order/gates/escalation-plan-b.md
+          bash ../../scripts/bash/archiguard.sh run plan a; code=$?
+          test "$code" -eq 0 || { echo "expected exit 0, got $code"; exit 1; }
+      - name: PowerShell launcher on the example
+        shell: pwsh
+        working-directory: examples/orders
+        run: |
+          & ../../scripts/powershell/archiguard.ps1 run plan b
+          if ($LASTEXITCODE -ne 1) { throw "expected exit 1, got $LASTEXITCODE" }
+          & ../../scripts/powershell/archiguard.ps1 rules --json | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "rules failed with $LASTEXITCODE" }
+          & ../../scripts/powershell/archiguard.ps1 run implement a
+          if ($LASTEXITCODE -ne 3) { throw "expected escalation exit 3, got $LASTEXITCODE" }
+          exit 0
+
+  spec-kit:
+    name: install into Spec Kit (${{ matrix.speckit }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        speckit: ["specify-cli", "specify-cli==1.0.1"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "${{ matrix.speckit }}"
+      - name: archiGuard + preset + scopeGuard in a fresh Spec Kit project
+        run: bash tools/e2e-speckit.sh "https://github.com/rlgdev/spec-kit-scopeguard/releases/download/$SCOPEGUARD_TAG/scopeguard.zip"
+
+  action:
+    name: GitHub Action self-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: run the action on the example (must fail on ARCH-201)
+        id: gate
+        continue-on-error: true
+        uses: ./
+        with:
+          working-directory: examples/orders
+          junit: archiguard.xml
+      - name: the gate must have failed, with a JUnit report
+        run: |
+          test "${{ steps.gate.outcome }}" = "failure"
+          grep -q "ARCH-201" examples/orders/archiguard.xml

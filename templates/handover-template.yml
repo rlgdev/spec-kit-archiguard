@@ -1,0 +1,23 @@
+# handover.yml - written by the formal handover from the BA specification tool to Spec Kit into the feature directory.
+# It is the contract between the specification and the architecture gates; agents never edit it.
+handover_version: 1
+
+source:
+  producer: ba-spec-tool
+  version: "1"                                  # the specification version the BA released
+  sha256: "<sha256 of spec.md as released>"     # A4.1 / sign-off: spec.md must stay unchanged
+
+domain:
+  map_version: "1.0.0"     # domain-map@<version> the D artefacts and the MAP were built from (A0.1)
+  home_context: orders     # optional; derived from use_cases when absent
+
+use_cases:                 # every Use Case of the feature and its home context from the MAP (A0.2)
+  UC-001: orders
+
+items:                     # optional context tags of SC / AC / BR; they must equal the home context
+  SC-001: orders
+
+data:                      # D artefacts: the entity and its owning context (A0.3)
+  D-001: { entity: Order, context: orders }
+
+scope: [UC-001, SC-001, AC-001, AC-002, BR-001, D-001]   # in-scope ids (A3.5 / H4 / test trace)

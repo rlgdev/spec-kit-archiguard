@@ -1,0 +1,45 @@
+# domain-map.yaml - the domain master design as data (loop step 0, owned by the lead architect).
+#
+# Published in the policy channel (the standards repository, one tag for rulebook, domain map and
+# decisions) and pinned per repository in archiguard-config.yml:
+#     domain:
+#       map: .specify/standards/domain-map.yaml
+#       pin: "1.0.0"
+#
+# The BA specification tool ingests the data model (a sub-product of the domain model), builds the Data artefacts (D)
+# and the context map (MAP) from it, and the formal handover stamps domain.map_version into the
+# feature's handover.yml. archiGuard's A0 domain guard checks the feature against this file.
+
+domain_map_version: "1.0.0"   # semantic version; a pre-release such as 1.1.0-draft cannot be pinned
+status: released              # draft | released (only a released map can be pinned)
+
+contexts:
+  orders:
+    domain: commerce
+    owner: "<domain owner>"
+    glossary: [Order, Order line, Customer, Basket]       # ubiquitous language (A0.4)
+    synonyms: { Purchase: Order }                         # declared synonyms (A0.4)
+    owns_entities: [Order, OrderLine]                     # entity ownership (A0.3)
+    publishes: [api:orders/orders.yaml]                   # contracts the context publishes
+    # code mapping for the context-boundary fitness function (A4.4)
+    code: ["src/main/java/com/acme/orders/**"]            # where the context's code lives
+    modules: [com.acme.orders]                            # import prefixes of the context
+    published: [com.acme.orders.api]                      # what other contexts may import
+    packs: []                                             # rulebook packs this context pulls in
+
+  payments:
+    domain: finance
+    owner: "<domain owner>"
+    glossary: [Payment, Invoice, VAT line]
+    owns_entities: [Payment, Invoice]
+    publishes: [api:payments/payments.yaml]
+    code: ["src/main/java/com/acme/payments/**"]
+    modules: [com.acme.payments]
+    published: [com.acme.payments.api]
+    packs: [payments-compliance]
+
+# from = the consumer (downstream), to = the provider (upstream).
+# types: customer-supplier, conformist, anticorruption-layer, open-host-service,
+#        published-language, shared-kernel, partnership (both ways), separate-ways (no dependency)
+relations:
+  - { from: orders, to: payments, type: customer-supplier, via: [api:payments/payments.yaml] }

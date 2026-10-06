@@ -1,0 +1,34 @@
+# Rules declared as data. Each check has a target (plan, contract, tasks, edit, code, runtime)
+# and a kind; archiGuard maps targets to gates: plan/contract -> A3.3, tasks -> A3.5,
+# edit -> A4.2, code -> A4.4, runtime -> A7 (Architecture Assessor).
+rules:
+  - id: ARCH-101
+    title: HTTP APIs are published as OpenAPI 3 contracts
+    level: must                      # must = blocking, should = advisory
+    applies_when:
+      stack: [java, node]            # Applies-when stack markers; empty = every stack
+    text: Every HTTP API is described by an OpenAPI 3 document in contracts/ before it is implemented.
+    checks:
+      - target: contract
+        kind: require_text
+        files: ["contracts/*.{yaml,yml,json}"]
+        pattern: "openapi:\\s*['\"]?3\\."
+        fix_hint: add an OpenAPI 3 document for the API to contracts/
+      - target: code
+        kind: contract_routes
+        sources: ["src/main/**/*.java"]
+
+  - id: ARCH-102
+    title: Controllers do not depend on persistence
+    level: must
+    applies_when:
+      stack: [java]
+    checks:
+      - target: code
+        kind: forbid_import
+        files: ["**/api/**/*.java"]
+        imports: ["\\.persistence\\."]
+      - target: edit
+        kind: forbid_import
+        files: ["**/api/**/*.java"]
+        imports: ["\\.persistence\\."]

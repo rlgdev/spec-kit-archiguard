@@ -1,0 +1,3 @@
+profile: java-service
+description: Java services exposing HTTP APIs
+skills: [api-contracts, layering, context-boundaries, secrets, data-ownership]

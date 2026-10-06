@@ -1,0 +1,14 @@
+id: A4
+name: fitness functions
+version: 0.1.0
+implementation: builtin
+description: >-
+  The code stays inside the signed plan and the rulebook while the agent writes it, and is
+  released to testing only when the fitness verdict is green.
+checks:
+  A4.1: { name: entry pin check, target: spec, repairable: false }
+  A4.2: { name: edit guard, target: edit, repairable: true }
+  A4.3: { name: checklist STOP, target: tasks, native: "Spec Kit /speckit.implement stops on unchecked checklists" }
+  A4.4: { name: fitness runner, target: code, repairable: true }
+  A4.5: { name: converge, target: tasks, repairable: true }
+  A4.6: { name: traceability, target: code, repairable: true }

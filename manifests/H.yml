@@ -1,0 +1,14 @@
+id: H
+name: handover 4 -> 5
+version: 0.1.0
+implementation: builtin
+description: >-
+  Code enters the deterministic test loop only with a test-handover manifest whose entry checks
+  are all green.
+checks:
+  H1: { name: tasks complete, target: tasks, repairable: true }
+  H2: { name: converged, target: tasks, repairable: true }
+  H3: { name: fitness green, target: code, repairable: true }
+  H4: { name: test inventory, target: tests, repairable: true }
+  H5: { name: builds, target: code, repairable: true }
+  H6: { name: pins intact, target: spec, repairable: false }

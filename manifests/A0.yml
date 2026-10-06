@@ -1,0 +1,15 @@
+# Gate manifest (plug-in contract). archiGuard reads it to validate the pipeline in
+# archiguard-config.yml and to know which checks may be repaired by the maker.
+id: A0
+name: domain guard
+version: 0.1.0
+implementation: builtin
+description: >-
+  Every feature lives in one bounded context of the agreed domain map and reaches other
+  contexts only through relations the map allows.
+checks:
+  A0.1: { name: pin check, target: spec, repairable: false }
+  A0.2: { name: home context, target: spec, repairable: false }
+  A0.3: { name: entity ownership, target: spec, repairable: false }
+  A0.4: { name: vocabulary, target: plan, repairable: true }
+  A0.5: { name: relations in the plan, target: plan, repairable: true }

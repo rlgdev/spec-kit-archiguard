@@ -1,0 +1,18 @@
+# scopeGuard settings used when archiGuard runs the scope gate (gates.scope.config in archiguard-config.yml).
+# archiGuard calls scopeGuard's command line with this file; scopeGuard's own hooks and preset stay off,
+# so the scope gate runs exactly once, inside archiGuard's step B. Every key is optional.
+# Full reference: https://github.com/rlgdev/spec-kit-scopeguard/blob/main/config-template.yml
+
+mode: enforce
+
+ids:
+  # Requirement ID prefixes that belong to the traced scope: the BA hierarchy of the formal handover
+  # (D <- BR <- AC <- SC <- UC; SC is a BA scenario here, not a Spec Kit success criterion) plus
+  # Spec Kit's FR / NFR. Use cases are traced as stories once scopeGuard takes a configurable story key (UC).
+  requirement_prefixes: [SC, AC, BR, D, FR, NFR]
+
+plan:
+  section: Scope Coverage
+  require_reference_for_covered: true   # a 'covered' row must say where the plan handles the item
+
+unknown_ids: violation                  # IDs in plan / tasks that spec.md does not define

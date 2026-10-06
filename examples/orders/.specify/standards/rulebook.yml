@@ -1,0 +1,4 @@
+# Example standards repository ("architecture standards as skills"), checked out at its tag.
+name: acme-standards
+version: v2026.10.1
+not_applicable_reasons: [no-persistence, no-external-interface, no-ui, no-messaging, no-batch, read-only, no-personal-data, no-new-component]

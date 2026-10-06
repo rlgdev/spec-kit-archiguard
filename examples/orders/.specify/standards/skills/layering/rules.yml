@@ -1,0 +1,20 @@
+rules:
+  - id: ARCH-201
+    title: Layers depend downwards only (api -> application -> domain)
+    level: must
+    applies_when: { stack: [java] }
+    targets: [plan, code]   # the plan states its layering; the code is checked by the fitness runner
+    checks:
+      - target: code
+        kind: layers
+        scope: context          # layering inside a context; between contexts ARCH-301 decides
+        layers:
+          - { name: api, files: ["**/api/**"], modules: ["\\.api\\."] }
+          - { name: application, files: ["**/application/**"], modules: ["\\.application\\."] }
+          - { name: domain, files: ["**/domain/**"], modules: ["\\.domain\\."] }
+          - { name: infrastructure, files: ["**/infrastructure/**"], modules: ["\\.infrastructure\\."] }
+        allow:
+          api: [application, domain]
+          application: [domain]
+          infrastructure: [application, domain]
+          domain: []

@@ -1,0 +1,130 @@
+# archiGuard configuration
+#
+# Location: .specify/extensions/archiguard/archiguard-config.yml  (committed; change it through a pull request)
+# Workstation-only overrides: .specify/extensions/archiguard/local-config.yml (integration, iteration budgets)
+#
+# After changing `integration` or the pipeline, apply it to Spec Kit's hooks:
+#     bash .specify/extensions/archiguard/scripts/bash/archiguard.sh configure      (or /speckit.archiguard.configure)
+# Everything else takes effect on the next run. CI reads only this committed file.
+
+version: 1
+
+# inline: the gates run as steps A (after Setup) and B (before the post-execution hooks) inside
+#         /speckit.plan, /speckit.tasks and /speckit.implement - needs the archiguard-templates preset;
+#         without it archiGuard falls back to `hooks` automatically.
+# hooks:  the gates run as separate archiGuard commands triggered by Spec Kit's before_/after_ hooks.
+integration: inline
+
+# enforce | report (shadow: run and record, never block). A gate entry may lower it, never raise it.
+mode: enforce
+
+defaults:
+  max_iterations: 3        # repair iterations per step; the ceiling (package-policy.yml) caps every budget
+
+# What this project must obey - the standards repository pinned by tag, resolved into standards.lock.yml
+# with 'archiguard resolve' (commit the lock; CI re-resolves and fails on drift).
+standards:
+  rulebook: null                              # "<name>@<tag>" of the standards repository, e.g. acme-standards@v2026.10.1
+  path: .specify/standards                    # pinned checkout of the standards repository (git submodule)
+  profile: null                               # central rule set per stack, e.g. java-spring-service
+  include: []                                 # extra rules, e.g. [ARCH-210]
+  exclude: []                                 # e.g. [{ rule: ARCH-118, waiver: ADR-0042 }] - a must rule needs a ledger waiver
+  lock: .specify/archiguard/standards.lock.yml
+
+# The domain master design (A0). The map lives in the policy channel; the repository pins its version.
+domain:
+  map: .specify/standards/domain-map.yaml
+  pin: null                                   # the domain_map_version this repository is pinned to, e.g. "1.4.0"
+
+# The decision ledger: ADRs and waivers, hash-chained (archiguard ledger add / verify).
+ledger:
+  path: .specify/archiguard/ledger.jsonl
+
+feature:
+  handover: handover.yml      # handover record written by the formal handover from the BA specification tool to Spec Kit
+
+stack: auto                   # auto = from the stack markers in the lock; or a list, e.g. [java]
+
+# The gates plugged into the Spec Kit commands, in the order they run.
+pipeline:
+  speckit.plan:
+    step_a:                   # right after Setup
+      - { gate: A0, run: [A0.1, A0.2, A0.3], repair: false }   # red = stop at once (the agent cannot repair the map)
+      - { gate: A3, run: [A3.1] }                              # context loader: the applicable rules
+      - { gate: scope, run: [inventory] }                      # scopeGuard engine: the scope contract
+    step_b:                   # before the post-execution hooks and the completion report
+      max_iterations: 3
+      gates:
+        - { gate: scope, run: [plan] }                         # A3.2 scope coverage spec -> plan
+        - { gate: A0, run: [A0.5] }                            # relations in the plan
+        - { gate: A0, run: [A0.4], mode: report }              # vocabulary - shadow mode in the pilot
+        - { gate: A3, run: [A3.3, A3.7] }                      # check-plan, ledger check
+  speckit.tasks:
+    step_b:
+      max_iterations: 3
+      gates:
+        - { gate: scope, run: [tasks] }                        # coverage half of A3.5
+        - { gate: A3, run: [A3.5] }                            # task guard
+  speckit.implement:
+    step_a:
+      - { gate: A4, run: [A4.1], repair: false }               # entry pin check against the sign-off
+    step_b:
+      max_iterations: 3
+      gates:
+        - { gate: scope, run: [implement] }                    # carrying tasks done
+        - { gate: A4, run: [A4.4, A4.6] }                      # fitness runner, traceability
+
+# Loops that span commands, driven by the workflow (archiguard loop <name> -- <command>).
+loops:
+  handover_validator: 3      # 3.2 validator red -> back to the specification (read by the handover integration)
+  implement_converge: 3      # implement <-> converge
+  handover_entry: 3          # handover 4 -> 5 entry checks red -> implement
+  test_loop: 3               # deterministic test loop 4 <-> 5
+
+# Registered plug-in gates. archiGuard's own gates (A0, A3, A4, H) need no registration.
+gates:
+  scope:
+    extension: scopeguard                   # installed Spec Kit extension that provides the gate
+    version: ">=0.3.0,<0.5"                 # pinned range; archiGuard refuses another version
+    command: scripts/python/scopeguard.py   # relative to .specify/extensions/<extension>/
+    sha256: null                            # optional: sha256 of that file, pinned like the internal catalog entry
+    config: .specify/extensions/archiguard/scope-config.yml   # scopeGuard settings when archiGuard calls it
+
+# Who signs and on what evidence: archiguard signoff refuses unless these are green.
+signoff:
+  require: [speckit.plan, speckit.tasks, A3.6]
+
+# Build and test commands for the handover 4 -> 5 and the test loop (auto = from the stack markers).
+tests:
+  command: auto              # e.g. "mvn -B test"
+  build: auto                # e.g. "mvn -B -q -DskipTests package"
+  globs: auto                # test file globs for H4 / A4.6
+  junit: ["reports/**/*.xml", "**/target/surefire-reports/*.xml", "**/target/failsafe-reports/*.xml", "**/build/test-results/**/*.xml"]
+  timeout: 1800
+
+git:
+  base: main                 # A4.6 traceability: commits and test files since this branch
+
+edit_guard:                  # A4.2 (Claude Code hook): read-only paths and commands reserved for people
+  enabled: true
+  human_only: [signoff, reopen, resolve, ledger add, ledger revoke]   # archiguard subcommands an agent may not run
+  # policy (standards, lock, ledger), the archiGuard engine and this config, and the gate evidence (verdict files)
+  always_readonly: [".specify/standards/**", ".specify/archiguard/**", ".specify/extensions/archiguard/**", "specs/*/gates/**/*.json"]
+  after_handover: ["specs/*/spec.md", "specs/*/ba/**", "specs/*/handover.yml"]
+  after_signoff: ["specs/*/plan.md", "specs/*/research.md", "specs/*/data-model.md", "specs/*/quickstart.md", "specs/*/contracts/**", "specs/*/gates/signoff.json"]
+
+fitness:
+  provider: graph-free       # graph (Graphify behind the seam) arrives in wave 2
+
+# Per-check settings (all optional), e.g.:
+options: {}
+#   A0.4: { strip_suffixes: [Request, Response, Dto] }
+#   A0.5: { section: Integration Points }
+#   A3.3: { section: Architecture Conformance }
+#   A3.4: { article: "Corporate Architecture" }
+#   A3.5: { require_ids: story, require_marker: false, test_first_prefixes: [AC] }
+#   A3.6: { report: gates/analyze-report.md }
+#   A4.4: { exclude: ["**/generated/**"] }
+#   A4.6: { commits: true, tests: true }
+#   H4: { prefixes: [AC, BR] }
+#   scope: { require_deferral_reference: false }

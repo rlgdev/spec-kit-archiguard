@@ -1,0 +1,15 @@
+rules:
+  - id: ARCH-101
+    title: HTTP APIs are published as OpenAPI 3 contracts
+    level: must
+    applies_when: { stack: [java] }
+    text: Every HTTP API is described by an OpenAPI 3 document in contracts/ before it is implemented.
+    checks:
+      - target: contract
+        kind: require_text
+        files: ["contracts/*.{yaml,yml,json}"]
+        pattern: "openapi:\\s*['\"]?3\\."
+        fix_hint: add an OpenAPI 3 document for the API to contracts/
+      - target: code
+        kind: contract_routes
+        sources: ["src/main/**/*.java"]

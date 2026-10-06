@@ -1,0 +1,23 @@
+# Files in this repository that are not part of the installed extension.
+# (Spec Kit copies the extension root into .specify/extensions/archiguard/ for --dev installs;
+#  the release archive built by tools/build.py contains only the extension files.)
+
+.git/
+.github/
+.gitignore
+.gitattributes
+.extensionignore
+preset/
+tests/
+examples/
+docs/
+tools/
+catalog/
+workflows/
+dist/
+action.yml
+pytest.ini
+CONTRIBUTING.md
+__pycache__/
+*.pyc
+.pytest_cache/

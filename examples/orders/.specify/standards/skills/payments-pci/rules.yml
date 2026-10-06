@@ -1,0 +1,9 @@
+rules:
+  - id: ARCH-601
+    title: Card numbers are never logged
+    level: must
+    checks:
+      - target: code
+        kind: forbid_text
+        files: ["src/main/java/com/acme/payments/**"]
+        pattern: "log\\.[a-z]+\\(.*(pan|cardNumber)"

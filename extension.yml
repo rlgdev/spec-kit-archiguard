@@ -1,0 +1,111 @@
+schema_version: "1.0"
+
+extension:
+  id: archiguard
+  name: "archiGuard"
+  version: "0.1.0"
+  description: "Architecture gates for Spec Kit: A0 domain guard, A3 plan conformance, A4 fitness functions and the handover 4->5, with one gate runner, per-step iteration budgets and standards bound through a lock file"
+  author: "rlgdev"
+  repository: https://github.com/rlgdev/spec-kit-archiguard
+  homepage: https://github.com/rlgdev/spec-kit-archiguard
+  license: Proprietary
+  category: process
+  effect: read-write
+
+requires:
+  # 1.0.1: agent-native runtime events (the A4.2 edit guard) and the workflow engine used by archiguard-sdd
+  speckit_version: ">=1.0.1"
+  tools:
+    - name: python
+      version: ">=3.9"
+      required: false
+      description: "Runs the deterministic engine (standard library only). Without python on PATH the launchers use the Python bundled with specify-cli, or uv."
+
+provides:
+  commands:
+    - name: speckit.archiguard.planentry
+      file: commands/speckit.archiguard.planentry.md
+      description: "(integration: hooks) /speckit.plan step A: domain guard A0.1-A0.3, the applicable rules (A3.1), the scope contract"
+    - name: speckit.archiguard.plangate
+      file: commands/speckit.archiguard.plangate.md
+      description: "(integration: hooks) /speckit.plan step B: plan conformance gates with the bounded repair loop, then escalate"
+    - name: speckit.archiguard.tasksentry
+      file: commands/speckit.archiguard.tasksentry.md
+      description: "(integration: hooks) /speckit.tasks step A"
+    - name: speckit.archiguard.tasksgate
+      file: commands/speckit.archiguard.tasksgate.md
+      description: "(integration: hooks) /speckit.tasks step B: task guard and scope coverage with the bounded repair loop"
+    - name: speckit.archiguard.implemententry
+      file: commands/speckit.archiguard.implemententry.md
+      description: "(integration: hooks) /speckit.implement step A: entry pin check against the design authority sign-off"
+    - name: speckit.archiguard.implementgate
+      file: commands/speckit.archiguard.implementgate.md
+      description: "(integration: hooks) /speckit.implement step B: fitness functions and traceability with the bounded repair loop"
+    - name: speckit.archiguard.handover
+      file: commands/speckit.archiguard.handover.md
+      description: "Handover 4->5: entry checks H1-H6 and the test-handover manifest for the deterministic test loop"
+    - name: speckit.archiguard.report
+      file: commands/speckit.archiguard.report.md
+      description: "Architecture compliance report for the feature (verdicts, waivers, sign-off, test loop)"
+    - name: speckit.archiguard.rules
+      file: commands/speckit.archiguard.rules.md
+      description: "Show the architecture rules that apply to the feature and the contract the plan must meet"
+    - name: speckit.archiguard.configure
+      file: commands/speckit.archiguard.configure.md
+      description: "Apply archiguard-config.yml (inline or hooks, budgets, plugged gates) and show what is in force"
+    - name: speckit.archiguard.editguard
+      file: commands/speckit.archiguard.editguard.md
+      description: "(agent event) A4.2 edit guard: blocks edits of read-only artefacts and reports rule violations of an edit"
+
+  config:
+    - name: "archiguard-config.yml"
+      template: "config-template.yml"
+      description: "archiGuard settings: pipeline of gates per Spec Kit command, iteration budgets, standards, domain map, ledger"
+      required: false
+    - name: "scope-config.yml"
+      template: "scope-config-template.yml"
+      description: "scopeGuard settings archiGuard uses when it runs the scope gate"
+      required: false
+
+hooks:
+  before_plan:
+    command: speckit.archiguard.planentry
+    optional: false
+    description: "(integration: hooks) archiGuard step A of /speckit.plan"
+  after_plan:
+    command: speckit.archiguard.plangate
+    optional: false
+    description: "(integration: hooks) archiGuard step B of /speckit.plan - repair, then escalate"
+  before_tasks:
+    command: speckit.archiguard.tasksentry
+    optional: false
+    description: "(integration: hooks) archiGuard step A of /speckit.tasks"
+  after_tasks:
+    command: speckit.archiguard.tasksgate
+    optional: false
+    description: "(integration: hooks) archiGuard step B of /speckit.tasks - repair, then escalate"
+  before_implement:
+    command: speckit.archiguard.implemententry
+    optional: false
+    description: "(integration: hooks) archiGuard step A of /speckit.implement"
+  after_implement:
+    command: speckit.archiguard.implementgate
+    optional: false
+    description: "(integration: hooks) archiGuard step B of /speckit.implement - repair, then escalate"
+
+events:
+  pre_tool_use:
+    command: speckit.archiguard.editguard
+    matcher: "Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell"
+    timeout: 20
+  post_tool_use:
+    command: speckit.archiguard.editguard
+    matcher: "Edit|Write|MultiEdit|NotebookEdit"
+    timeout: 60
+
+tags:
+  - "architecture"
+  - "governance"
+  - "quality-gate"
+  - "fitness-functions"
+  - "domain-driven-design"

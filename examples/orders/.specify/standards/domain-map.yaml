@@ -1,0 +1,32 @@
+domain_map_version: "1.4.0"
+status: released
+contexts:
+  orders:
+    domain: commerce
+    owner: Orders domain owner
+    glossary: [Order, Order line, Customer, Basket]
+    synonyms: { Purchase: Order }
+    owns_entities: [Order, OrderLine]
+    publishes: [api:orders/orders.yaml]
+    code: ["src/main/java/com/acme/orders/**", "src/test/java/com/acme/orders/**"]
+    modules: [com.acme.orders]
+    published: [com.acme.orders.api]
+  payments:
+    domain: finance
+    owner: Payments domain owner
+    glossary: [Payment, Invoice, VAT line]
+    owns_entities: [Payment, Invoice]
+    publishes: [api:payments/payments.yaml]
+    code: ["src/main/java/com/acme/payments/**"]
+    modules: [com.acme.payments]
+    published: [com.acme.payments.api]
+    packs: [payments-pci]
+  customers:
+    domain: commerce
+    owner: Customer domain owner
+    glossary: [Customer, Address]
+    owns_entities: [Customer]
+    modules: [com.acme.customers]
+relations:
+  - { from: orders, to: payments, type: customer-supplier, via: [api:payments/payments.yaml] }
+  - { from: orders, to: customers, type: conformist }

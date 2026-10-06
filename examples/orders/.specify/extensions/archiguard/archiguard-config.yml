@@ -1,0 +1,40 @@
+# Example configuration. The scope gate (scopeGuard) and A4.6 (git traceability) are left out so the
+# example runs on its own; see config-template.yml for the full default pipeline.
+version: 1
+integration: hooks
+mode: enforce
+defaults:
+  max_iterations: 3
+standards:
+  rulebook: acme-standards@v2026.10.1
+  path: .specify/standards
+  profile: java-service
+  lock: .specify/archiguard/standards.lock.yml
+domain:
+  map: .specify/standards/domain-map.yaml
+  pin: "1.4.0"
+ledger:
+  path: .specify/archiguard/ledger.jsonl
+pipeline:
+  speckit.plan:
+    step_a:
+      - { gate: A0, run: [A0.1, A0.2, A0.3], repair: false }
+      - { gate: A3, run: [A3.1] }
+    step_b:
+      max_iterations: 3
+      gates:
+        - { gate: A0, run: [A0.5] }
+        - { gate: A0, run: [A0.4], mode: report }
+        - { gate: A3, run: [A3.3, A3.4, A3.7] }
+  speckit.tasks:
+    step_b:
+      gates:
+        - { gate: A3, run: [A3.5] }
+  speckit.implement:
+    step_a:
+      - { gate: A4, run: [A4.1], repair: false }
+    step_b:
+      gates:
+        - { gate: A4, run: [A4.4] }
+signoff:
+  require: [speckit.plan, speckit.tasks]

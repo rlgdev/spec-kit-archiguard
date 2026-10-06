@@ -1,0 +1,74 @@
+name: "archiGuard for Spec Kit"
+description: "Required check: every archiGuard gate on the final commit, standards-lock drift and the decision ledger"
+author: "rlgdev"
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  features:
+    description: "'all' to check every feature under specs/, or one feature directory such as specs/001-my-feature"
+    required: false
+    default: "all"
+  implement:
+    description: "Also verify the implement gates for features without a design sign-off"
+    required: false
+    default: "false"
+  junit:
+    description: "Path of a JUnit XML report to write (empty = none)"
+    required: false
+    default: ""
+  summary:
+    description: "Write the result to the job summary"
+    required: false
+    default: "true"
+  engine:
+    description: "'installed' = the archiGuard the project installed (.specify/extensions/archiguard), falling back to this action's; 'action' = this action's"
+    required: false
+    default: "installed"
+  working-directory:
+    description: "Spec Kit project root (the directory that contains .specify/ and specs/)"
+    required: false
+    default: "."
+  args:
+    description: "Extra arguments passed to 'archiguard ci'"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: archiGuard
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        AG_FEATURES: ${{ inputs.features }}
+        AG_IMPLEMENT: ${{ inputs.implement }}
+        AG_JUNIT: ${{ inputs.junit }}
+        AG_SUMMARY: ${{ inputs.summary }}
+        AG_ENGINE: ${{ inputs.engine }}
+        AG_ARGS: ${{ inputs.args }}
+        AG_ACTION_ENGINE: ${{ github.action_path }}/scripts/python/archiguard.py
+        ARCHIGUARD_CI: "1"
+      run: |
+        set -euo pipefail
+        PY=python3
+        command -v python3 >/dev/null 2>&1 && python3 -c 'import sys' >/dev/null 2>&1 || PY=python
+        engine="$AG_ACTION_ENGINE"
+        if [ "$AG_ENGINE" = "installed" ] && [ -f .specify/extensions/archiguard/scripts/python/archiguard.py ]; then
+          engine=.specify/extensions/archiguard/scripts/python/archiguard.py
+        fi
+        cmd=("$PY" "$engine" ci)
+        if [ "$AG_FEATURES" != "all" ]; then cmd+=(--feature-dir "$AG_FEATURES"); fi
+        if [ "$AG_IMPLEMENT" = "true" ]; then cmd+=(--implement); fi
+        if [ -n "$AG_JUNIT" ]; then cmd+=(--junit "$AG_JUNIT"); fi
+        if [ "$AG_SUMMARY" = "true" ] && [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+          tmp="$(mktemp)"; cmd+=(--out "$tmp")
+        fi
+        if [ -n "$AG_ARGS" ]; then read -r -a extra <<< "$AG_ARGS"; cmd+=("${extra[@]}"); fi
+        echo "archiGuard: ${cmd[*]:1}"
+        set +e
+        "${cmd[@]}"; code=$?
+        set -e
+        if [ -n "${tmp:-}" ] && [ -f "$tmp" ]; then cat "$tmp" >> "$GITHUB_STEP_SUMMARY"; fi
+        exit $code
