@@ -18,6 +18,7 @@ dist/
 action.yml
 pytest.ini
 CONTRIBUTING.md
+SECURITY.md
 __pycache__/
 *.pyc
 .pytest_cache/

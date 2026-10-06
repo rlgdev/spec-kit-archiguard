@@ -1,0 +1,4 @@
+# Code owners of archiGuard. Every pull request needs a review from an owner of the files it changes.
+# The release surface (manifest, launchers, engine, catalogs, workflows) is owned by the maintainer.
+
+*                       @rlgdev

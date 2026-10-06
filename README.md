@@ -3,6 +3,8 @@
 [![CI](https://github.com/rlgdev/spec-kit-archiguard/actions/workflows/ci.yml/badge.svg)](https://github.com/rlgdev/spec-kit-archiguard/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+> Part of the **Guardians** family for Spec Kit (scopeGuard · archiGuard · auditGuard). Install the three together with the [Guardians bundle](https://github.com/rlgdev/spec-kit-guardians) and start with its [getting-started guide](https://github.com/rlgdev/spec-kit-guardians/blob/main/docs/getting-started.md).
+
 **Deterministic architecture gates for [GitHub Spec Kit](https://github.com/github/spec-kit).**
 A feature stays inside its bounded context, the plan shows how it meets every architecture rule that
 applies to it, and the code is released to testing only when the fitness functions are green.
@@ -363,12 +365,15 @@ Run `configure` of scopeGuard afterwards if you keep it, to turn its own hooks b
 
 ```bash
 python -m pytest -q          # engine tests (set SCOPEGUARD_SRC to a scopeGuard checkout for the integration test)
+python tools/build.py --check  # versions, manifests and catalogs agree (CI)
 python tools/build.py        # dist/archiguard.zip, dist/archiguard-preset.zip, dist/archiguard-sdd.yml, dist/SHA256SUMS
 ```
 
 To release, bump the version in `extension.yml`, `preset/preset.yml`, the workflow,
 `scripts/python/archiguard_core/__init__.py` and `catalog/*.json`, add a CHANGELOG entry, then push a
 `vX.Y.Z` tag. The release workflow runs the tests, builds the archives and attaches them to the release.
+
+[CONTRIBUTING.md](CONTRIBUTING.md) has the conventions and the release steps of the family.
 
 ## License
 

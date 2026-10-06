@@ -18,7 +18,10 @@ if [[ ! -f "$ENGINE" ]]; then
 fi
 
 _works() {
-    "$@" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' >/dev/null 2>&1
+    # the marker check also rejects the Windows Store "python3" alias stub, which prints an install hint
+    local out
+    out="$("$@" -c 'import sys; print("archiguard-python-ok" if sys.version_info >= (3, 9) else "too-old")' 2>/dev/null)" || return 1
+    [[ "$out" == *archiguard-python-ok* ]]
 }
 
 PY=()

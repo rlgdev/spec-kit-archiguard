@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Build the release archives for archiGuard.
+"""Build the release archives for archiGuard and check that every version agrees.
 
     python tools/build.py            # -> dist/archiguard.zip, dist/archiguard-preset.zip, dist/archiguard-sdd.yml, dist/SHA256SUMS
+    python tools/build.py --check    # fail when a version disagrees, a referenced file is missing or a catalog count is off (CI)
     python tools/build.py --check-tag v0.1.0
 
-Both archives have their manifest (extension.yml / preset.yml) at the archive root, as
+What must agree: extension.yml, preset/preset.yml, workflows/archiguard-sdd/workflow.yml, archiguard_core/__init__.py,
+catalog/extensions.json and catalog/presets.json. Both archives have their manifest (extension.yml / preset.yml) at the archive root, as
 `specify extension add --from` and `specify preset add --from` expect. Archives are reproducible:
 fixed timestamps, sorted entries, normalized modes.
 """
@@ -19,6 +21,7 @@ import shutil
 import sys
 import zipfile
 from pathlib import Path
+from typing import List
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
@@ -53,6 +56,39 @@ def versions() -> dict:
     return found
 
 
+def manifest_problems() -> List[str]:
+    """Files the manifests name exist, and the catalog counts match the manifests."""
+    problems: List[str] = []
+    manifest = (ROOT / "extension.yml").read_text(encoding="utf-8")
+    commands = re.findall(r"file:\s*(commands/[^\s}]+)", manifest)
+    for command in commands:
+        if not (ROOT / command).is_file():
+            problems.append(f"extension.yml names a command file that does not exist: {command}")
+    for template in re.findall(r'template:\s*"?([^"\s]+)"?', manifest):
+        if not (ROOT / template).is_file():
+            problems.append(f"extension.yml names a config template that does not exist: {template}")
+    hooks = len(re.findall(r"^  (before|after)_[a-z]+:\s*$", manifest, re.M))
+    events = len(re.findall(r"^  [a-z_]+:\s*$", manifest.split("\nevents:")[1].split("\ntags:")[0], re.M)) if "\nevents:" in manifest else 0
+    catalog = json.loads((ROOT / "catalog" / "extensions.json").read_text(encoding="utf-8"))["extensions"]
+    provides = (catalog.get("archiguard") or {}).get("provides", {})
+    if (provides.get("commands"), provides.get("hooks"), provides.get("events", 0)) != (len(commands), hooks, events):
+        problems.append(f"catalog/extensions.json provides {provides} but extension.yml has {len(commands)} commands, "
+                        f"{hooks} hooks and {events} events")
+    preset = (PRESET_ROOT / "preset.yml").read_text(encoding="utf-8")
+    for file in re.findall(r'file:\s*"?([^"\s]+)"?', preset):
+        if not (PRESET_ROOT / file).is_file():
+            problems.append(f"preset/preset.yml names a file that does not exist: {file}")
+    templates, wraps = preset.count('type: "template"'), preset.count('type: "command"')
+    presets = json.loads((ROOT / "catalog" / "presets.json").read_text(encoding="utf-8"))["presets"]
+    provides = (presets.get("archiguard-templates") or {}).get("provides", {})
+    if provides.get("templates") != templates or provides.get("commands") != wraps:
+        problems.append(f"catalog/presets.json provides {provides} but preset.yml has {templates} templates and {wraps} commands")
+    for name in EXTENSION_FILES:
+        if not (ROOT / name).is_file():
+            problems.append(f"release file missing: {name}")
+    return problems
+
+
 def add_file(zf: zipfile.ZipFile, source: Path, arcname: str) -> None:
     info = zipfile.ZipInfo(arcname, date_time=FIXED_DATE)
     executable = source.suffix in (".sh", ".py") and "scripts" in source.parts
@@ -85,17 +121,24 @@ def collect_preset() -> list:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--check", action="store_true", help="only check: versions equal, referenced files exist, catalog counts right")
     parser.add_argument("--check-tag", help="fail unless all versions equal this tag (with or without leading v)")
     args = parser.parse_args()
 
+    problems = manifest_problems()
     found = versions()
     if len(set(found.values())) != 1:
-        print(f"version mismatch: {found}", file=sys.stderr)
-        return 1
+        problems.append(f"version mismatch: {found}")
     version = next(iter(found.values()))
     if args.check_tag and args.check_tag.lstrip("v") != version:
-        print(f"tag {args.check_tag} does not match version {version}", file=sys.stderr)
+        problems.append(f"tag {args.check_tag} does not match version {version}")
+    if problems:
+        for problem in problems:
+            print(problem, file=sys.stderr)
         return 1
+    if args.check:
+        print(f"ok: version {version}, manifests and catalogs agree")
+        return 0
 
     outputs = {
         DIST / "archiguard.zip": collect_extension(),

@@ -1,0 +1,11 @@
+# Keep the GitHub Actions this repository uses (checkout, setup-python, ...) at their current major versions.
+# The extension itself has no third-party dependencies: Python standard library only.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies]
+    commit-message:
+      prefix: "CI"

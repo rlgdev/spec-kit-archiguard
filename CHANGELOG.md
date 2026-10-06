@@ -4,6 +4,26 @@ All notable changes to archiGuard are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- The bash and PowerShell launchers reject the Windows Store `python3` alias stub (it prints an install hint and
+  exits 0) with the same marker check auditGuard and Guardians use; the header comment already promised it.
+
+### Changed
+
+- CI tests the scopeGuard integration and the end-to-end install against scopeGuard 0.4.0, the version the
+  Guardians bundle pins (was 0.3.0).
+
+### Added
+
+- `tools/build.py --check` (CI): versions equal, the files the manifests name exist, the catalog `provides` counts
+  match the manifests. The CI `lint` job runs it with pyflakes and shellcheck, like the siblings.
+- Repository governance for corporate use: `CODEOWNERS`, `SECURITY.md` (private vulnerability reporting),
+  `CONTRIBUTING.md` (the family's conventions and release steps), Dependabot for the GitHub Actions.
+- The README points to the Guardians bundle and its getting-started guide.
+
 ## [0.1.0] - 2026-10-05
 
 First release: the A-gates of the specification "archiGuard · A-gates specification - A0 · A3 · A4 ·

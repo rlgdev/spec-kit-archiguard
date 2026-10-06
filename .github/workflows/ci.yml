@@ -10,7 +10,8 @@ permissions:
   contents: read
 
 env:
-  SCOPEGUARD_TAG: v0.3.0
+  # the scopeGuard release the integration test and the e2e install (= the Guardians bundle pin)
+  SCOPEGUARD_TAG: v0.4.0
 
 jobs:
   test:
@@ -64,6 +65,7 @@ jobs:
       - run: python -m pip install pyflakes
       - run: python -m pyflakes scripts/python tools tests
       - run: shellcheck scripts/bash/archiguard.sh tools/e2e-speckit.sh
+      - run: python tools/build.py --check
 
   launchers:
     name: launchers (${{ matrix.os }})
