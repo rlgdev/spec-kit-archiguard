@@ -96,7 +96,9 @@ def test_scope_gate_pinned_by_sha256(project, ag):
     import hashlib
     ext = install_fake_scopeguard(project)
     plug_scope(project)
-    digest = hashlib.sha256((ext / "scripts" / "python" / "scopeguard.py").read_bytes()).hexdigest()
+    # the pin is the sha256 of the file as released, with LF line endings (a CRLF checkout still matches)
+    raw = (ext / "scripts" / "python" / "scopeguard.py").read_bytes().replace(b"\r\n", b"\n")
+    digest = hashlib.sha256(raw).hexdigest()
     edit(project, CFG, "signoff:", f"gates:\n  scope:\n    sha256: \"{'0' * 64}\"\nsignoff:")
     r = ag(project, "check", "scope", "plan")
     assert r.code == 2 and "pins " + "0" * 64 in r.out, r

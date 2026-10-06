@@ -35,7 +35,7 @@ gates:
     command: tools/secgate.py          # relative to the project root, or to .specify/extensions/<extension>/
     extension: null                    # name an installed Spec Kit extension to resolve command inside it
     version: ">=1.0,<2"                # refused (exit 2) when the installed version does not satisfy it
-    sha256: null                       # optional pin of the command file (quoted hex digest)
+    sha256: null                       # optional pin of the command file: sha256 with LF line endings, quoted
     config: tools/secgate.yml          # passed as --config
     timeout: 600
     checks:

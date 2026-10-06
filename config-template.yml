@@ -87,7 +87,7 @@ gates:
     extension: scopeguard                   # installed Spec Kit extension that provides the gate
     version: ">=0.3.0,<0.5"                 # pinned range; archiGuard refuses another version
     command: scripts/python/scopeguard.py   # relative to .specify/extensions/<extension>/
-    sha256: null                            # optional: sha256 of that file, pinned like the internal catalog entry
+    sha256: null                            # optional: sha256 of that file as released (LF line endings), quoted
     config: .specify/extensions/archiguard/scope-config.yml   # scopeGuard settings when archiGuard calls it
 
 # Who signs and on what evidence: archiguard signoff refuses unless these are green.

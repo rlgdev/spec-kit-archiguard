@@ -107,7 +107,7 @@ gates:
     extension: scopeguard                   # installed Spec Kit extension that provides the gate
     version: ">=0.3.0,<0.5"                 # archiGuard refuses another version (exit 2)
     command: scripts/python/scopeguard.py   # relative to .specify/extensions/<extension>/
-    sha256: null                            # optional pin of that file (quoted 64-character hex)
+    sha256: null                            # optional pin of that file (sha256 with LF line endings, quoted hex)
     config: .specify/extensions/archiguard/scope-config.yml
   SEC:                                      # a third-party gate
     command: tools/secgate.py               # relative to the project root when no extension is named
