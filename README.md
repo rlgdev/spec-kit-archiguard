@@ -101,7 +101,7 @@ bash .specify/extensions/archiguard/scripts/bash/archiguard.sh configure
 #    or, inside your agent: /speckit.archiguard.configure
 ```
 
-Spec Kit asks you to confirm installs from a URL; answer `y`. Then bind the project to its standards
+Spec Kit asks you to confirm each extension install from a URL (steps 1 and 3); answer `y`. The preset install (step 2) does not ask. Then bind the project to its standards
 (below) and run `configure` again; it prints what is in force and what is still missing.
 
 <details>
@@ -187,6 +187,7 @@ $ archiguard run implement b
   [FAIL] A4 · A4.4 fitness runner               2 blocking
   1. [A4.4] ARCH-201 - layer 'domain' must not depend on layer 'api' (import 'com.acme.orders.api.OrderController')
        where: src/main/java/com/acme/orders/domain/Order.java:3
+       fix:   'domain' may depend on: no other layer
   2. [A4.4] ARCH-301 - 'com.acme.payments.internal.PaymentGateway' is not part of the published interface of context 'payments'
        where: src/main/java/com/acme/orders/api/OrderController.java:4
        fix:   use what 'payments' publishes: com.acme.payments.api
@@ -364,9 +365,9 @@ Run `configure` of scopeGuard afterwards if you keep it, to turn its own hooks b
 ## Development
 
 ```bash
-python -m pytest -q          # engine tests (set SCOPEGUARD_SRC to a scopeGuard checkout for the integration test)
+python -m pytest -q            # engine tests (set SCOPEGUARD_SRC to a scopeGuard checkout for the integration test)
 python tools/build.py --check  # versions, manifests and catalogs agree (CI)
-python tools/build.py        # dist/archiguard.zip, dist/archiguard-preset.zip, dist/archiguard-sdd.yml, dist/SHA256SUMS
+python tools/build.py          # dist/archiguard.zip, dist/archiguard-preset.zip, dist/archiguard-sdd.yml, dist/SHA256SUMS
 ```
 
 To release, bump the version in `extension.yml`, `preset/preset.yml`, the workflow,

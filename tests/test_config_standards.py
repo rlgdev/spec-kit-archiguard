@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import pytest
@@ -221,6 +222,18 @@ def test_scaffold_writes_the_starting_files(project, ag, tmp_path):
     rb = tmp_path / "rb"
     assert ag(project, "scaffold", "rulebook", "--out", str(rb), feature=False).code == 0
     assert ag(project, "validate-standards", str(rb), feature=False).code == 0
+
+
+def test_scaffolded_rulebook_and_domain_map_resolve(project, ag):
+    """The two starting files fit together: every pack the map names exists in the rulebook."""
+    std = project / ".specify" / "standards"
+    shutil.rmtree(std)
+    assert ag(project, "scaffold", "rulebook", "--out", str(std), feature=False).code == 0
+    assert ag(project, "scaffold", "domain-map", feature=False).code == 0      # -> domain.map = .specify/standards/domain-map.yaml
+    edit(project, CFG, "rulebook: acme-standards@v2026.10.1", "rulebook: example-standards@v0.1.0")
+    edit(project, CFG, 'pin: "1.4.0"', 'pin: "1.0.0"')
+    r = ag(project, "resolve", feature=False)
+    assert r.code == 0 and "example-standards@v0.1.0" in r.out, r
 
 
 def test_rulebook_in_its_own_checkout_is_pinned_by_tag_and_commit(project, ag):

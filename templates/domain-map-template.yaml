@@ -36,7 +36,7 @@ contexts:
     code: ["src/main/java/com/acme/payments/**"]
     modules: [com.acme.payments]
     published: [com.acme.payments.api]
-    packs: [payments-compliance]
+    packs: []                                             # e.g. [payments-pci] once packs/payments-pci.yml exists in the rulebook
 
 # from = the consumer (downstream), to = the provider (upstream).
 # types: customer-supplier, conformist, anticorruption-layer, open-host-service,

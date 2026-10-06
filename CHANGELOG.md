@@ -8,8 +8,15 @@ All notable changes to archiGuard are documented here. The format follows
 
 ### Fixed
 
+- `scaffold domain-map`: the payments context of the template no longer pulls in a pack (`payments-compliance`) that
+  the rulebook template does not define, so `resolve` no longer fails with "pack 'payments-compliance' is not defined
+  in the rulebook" on the two scaffolded files.
+- `tools/build.py` marks every archive entry as made on Unix (`create_system = 3`), so an archive built on Windows
+  has the same sha256 as one built on Linux/macOS and keeps the launchers' executable bit.
 - The bash and PowerShell launchers reject the Windows Store `python3` alias stub (it prints an install hint and
   exits 0) with the same marker check auditGuard and Guardians use; the header comment already promised it.
+- The engine no longer writes `__pycache__` into `.specify/extensions/archiguard/` (the launcher sets
+  `sys.dont_write_bytecode`): a `git add .specify` after a run committed the `.pyc` files.
 - A plug-in gate whose command is not a `.py` file (a shell script or binary) is probed with `<command> --version`
   directly, as docs/plugin-contract.md says; it was run through archiGuard's Python and every `version:` constraint
   on such a gate failed with exit 2.
@@ -29,6 +36,8 @@ All notable changes to archiGuard are documented here. The format follows
 - Repository governance for corporate use: `CODEOWNERS`, `SECURITY.md` (private vulnerability reporting),
   `CONTRIBUTING.md` (the family's conventions and release steps), Dependabot for the GitHub Actions.
 - The README points to the Guardians bundle and its getting-started guide.
+- The preset declares `requires.extensions: archiguard >=0.1.0`: Spec Kit >=1.1.1 warns after `specify preset add`
+  when the extension is missing (the wrapped steps do nothing without it); older Spec Kit versions ignore the key.
 
 ## [0.1.0] - 2026-10-05
 

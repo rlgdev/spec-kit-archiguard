@@ -14,6 +14,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SCOPEGUARD_ZIP="${1:?usage: e2e-speckit.sh <scopeguard.zip URL or path>}"
 PORT="${E2E_PORT:-8765}"
 WORK="$(mktemp -d)"
+trap 'kill "${SERVER:-}" 2>/dev/null || true; rm -rf "$WORK"' EXIT
 PY="$(command -v python3 || command -v python)"
 
 fail() { echo "E2E FAIL: $*" >&2; exit 1; }
@@ -30,7 +31,6 @@ cp "$REPO"/dist/archiguard.zip "$REPO"/dist/archiguard-preset.zip "$WORK/www/"
 if [[ -f "$SCOPEGUARD_ZIP" ]]; then cp "$SCOPEGUARD_ZIP" "$WORK/www/scopeguard.zip"; else curl -fsSL -o "$WORK/www/scopeguard.zip" "$SCOPEGUARD_ZIP"; fi
 (cd "$WORK/www" && exec "$PY" -m http.server "$PORT" --bind 127.0.0.1 >/dev/null 2>&1) &
 SERVER=$!
-trap 'kill $SERVER 2>/dev/null || true; rm -rf "$WORK"' EXIT
 sleep 2
 BASE="http://127.0.0.1:$PORT"
 

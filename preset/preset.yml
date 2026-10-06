@@ -11,6 +11,9 @@ preset:
 
 requires:
   speckit_version: ">=1.0.1"
+  extensions:
+    - id: archiguard
+      version: ">=0.1.0"
 
 provides:
   templates:

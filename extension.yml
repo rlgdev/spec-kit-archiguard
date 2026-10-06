@@ -15,6 +15,9 @@ extension:
 requires:
   # 1.0.1: agent-native runtime events (the A4.2 edit guard) and the workflow engine used by archiguard-sdd
   speckit_version: ">=1.0.1"
+  # informational: as of Spec Kit 1.1.1 the CLI reads only requires.speckit_version from this manifest (extension add,
+  # compatibility and `extension info` of a local install ignore `tools`; info lists tools only from a catalog entry).
+  # The launchers find python themselves.
   tools:
     - name: python
       version: ">=3.9"
