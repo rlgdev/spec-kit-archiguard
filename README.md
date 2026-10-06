@@ -368,6 +368,7 @@ Run `configure` of scopeGuard afterwards if you keep it, to turn its own hooks b
 python -m pytest -q            # engine tests (set SCOPEGUARD_SRC to a scopeGuard checkout for the integration test)
 python tools/build.py --check  # versions, manifests and catalogs agree (CI)
 python tools/build.py          # dist/archiguard.zip, dist/archiguard-preset.zip, dist/archiguard-sdd.yml, dist/SHA256SUMS
+bash tools/e2e-speckit.sh https://github.com/rlgdev/spec-kit-scopeguard/releases/download/v0.4.0/scopeguard.zip   # install into a fresh Spec Kit project together with scopeGuard (the pin of the install step and CI; a local scopeguard.zip path works too) and drive it (needs `specify`)
 ```
 
 To release, bump the version in `extension.yml`, `preset/preset.yml`, the workflow,

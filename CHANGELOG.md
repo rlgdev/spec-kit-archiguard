@@ -6,6 +6,21 @@ All notable changes to archiGuard are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `tools/build.py --check` (CI): versions equal, the files the manifests name exist, the catalog `provides` counts
+  match the manifests. The CI `lint` job runs it with pyflakes and shellcheck, like the siblings.
+- Repository governance for corporate use: `CODEOWNERS`, `SECURITY.md` (private vulnerability reporting),
+  `CONTRIBUTING.md` (the family's conventions and release steps), Dependabot for the GitHub Actions.
+- The README points to the Guardians bundle and its getting-started guide.
+- The preset declares `requires.extensions: archiguard >=0.1.0`: Spec Kit 1.0.4 or newer warns after `specify preset add`
+  when the extension is missing (the wrapped steps do nothing without it); older Spec Kit versions ignore the key.
+
+### Changed
+
+- CI tests the scopeGuard integration and the end-to-end install against scopeGuard 0.4.0, the version the
+  Guardians bundle pins (was 0.3.0).
+
 ### Fixed
 
 - `scaffold domain-map`: the payments context of the template no longer pulls in a pack (`payments-compliance`) that
@@ -23,21 +38,6 @@ All notable changes to archiGuard are documented here. The format follows
 - `docs/configuration.md` documents all options the engine reads: `A3.5.test_task_pattern`, `A3.5.fitness_tasks`,
   `A3.5.rules` and `scope.deferral_reference_pattern` were missing from the Options table, and the
   `edit_guard.after_signoff` default lists `gates/signoff.json`.
-
-### Changed
-
-- CI tests the scopeGuard integration and the end-to-end install against scopeGuard 0.4.0, the version the
-  Guardians bundle pins (was 0.3.0).
-
-### Added
-
-- `tools/build.py --check` (CI): versions equal, the files the manifests name exist, the catalog `provides` counts
-  match the manifests. The CI `lint` job runs it with pyflakes and shellcheck, like the siblings.
-- Repository governance for corporate use: `CODEOWNERS`, `SECURITY.md` (private vulnerability reporting),
-  `CONTRIBUTING.md` (the family's conventions and release steps), Dependabot for the GitHub Actions.
-- The README points to the Guardians bundle and its getting-started guide.
-- The preset declares `requires.extensions: archiguard >=0.1.0`: Spec Kit >=1.1.1 warns after `specify preset add`
-  when the extension is missing (the wrapped steps do nothing without it); older Spec Kit versions ignore the key.
 
 ## [0.1.0] - 2026-10-05
 

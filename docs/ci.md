@@ -50,8 +50,9 @@ jobs:
       - run: python .specify/extensions/archiguard/scripts/python/archiguard.py test --feature-dir specs/001-my-feature
 ```
 
-The action uses the archiGuard installed in the project (`engine: installed`), so CI runs the same
-version as the developers; `engine: action` uses the action's own copy.
+By default (`engine: installed`) the action runs the archiGuard the project installed under
+`.specify/extensions/archiguard`, so CI runs the same version as the developers, and falls back to its
+own copy when the project has none; `engine: action` always uses the action's own copy.
 
 ## Bitbucket Pipelines
 

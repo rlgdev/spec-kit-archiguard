@@ -33,7 +33,7 @@ ready when all of it is green.
   Store stub is rejected by a marker check), then specify-cli's Python under `uv tool dir`, then `uv run`.
 - **Line endings.** LF everywhere (`.gitattributes`); files the tools write are LF and UTF-8.
 - **Configuration.** Unknown keys are errors. A new key gets a commented line in `config-template.yml`, a
-  default in the code, a test and a line in the README.
+  default in the code, a test and a row in `docs/configuration.md`.
 - **Output.** Exit codes `0` ok, `1` findings, `2` cannot run (fail-closed), `3` escalated / reserved for people
   (where the tool defines it). Every finding names the file and the fix.
 - **Changelog.** [Keep a Changelog](https://keepachangelog.com/en/1.1.0/): add your change under
