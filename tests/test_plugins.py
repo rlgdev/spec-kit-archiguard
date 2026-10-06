@@ -173,6 +173,30 @@ def test_registered_external_gate(project, ag):
     assert ag(project, "check", "SEC", "SEC.1").code == 2
 
 
+SHELL_GATE = """#!/bin/sh
+if [ "$1" = "--version" ]; then echo "secgate 1.2.0"; exit 0; fi
+printf '%s\\n' '{"verdicts":[{"check":"SEC.1","status":"pass","findings":[]}]}'
+exit 0
+"""
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="a shell script is not executable on Windows")
+def test_registered_gate_that_is_not_python_is_probed_directly(project, ag):
+    # docs/plugin-contract.md: a .py command runs under archiGuard's Python, anything else is executed directly,
+    # and the version comes from `<command> --version`
+    write(project, "tools/secgate.sh", SHELL_GATE)
+    os.chmod(project / "tools" / "secgate.sh", 0o755)
+    edit(project, CFG, "signoff:", (
+        "gates:\n  SEC:\n    command: tools/secgate.sh\n    version: \">=1.0\"\n"
+        "    checks:\n      SEC.1: { name: transport security, target: code }\nsignoff:"))
+    edit(project, CFG, "        - { gate: A4, run: [A4.4] }", "        - { gate: A4, run: [A4.4] }\n        - { gate: SEC, run: [SEC.1] }")
+    r = ag(project, "check", "SEC", "SEC.1")
+    assert r.code == 0, r
+    edit(project, CFG, "    version: \">=1.0\"", "    version: \">=2.0\"")
+    r = ag(project, "check", "SEC", "SEC.1")
+    assert r.code == 2 and "installed version 1.2.0 does not satisfy >=2.0" in r.out, r
+
+
 # --------------------------------------------------------------------------- #
 # The real scopeGuard (CI checks it out; set SCOPEGUARD_SRC to run it locally)  #
 # --------------------------------------------------------------------------- #
@@ -181,7 +205,7 @@ SCOPEGUARD_SRC = os.environ.get("SCOPEGUARD_SRC", "")
 
 
 @pytest.mark.skipif(not SCOPEGUARD_SRC or not Path(SCOPEGUARD_SRC, "extension.yml").is_file(),
-                    reason="SCOPEGUARD_SRC (a scopeGuard v0.3.x checkout) is not set")
+                    reason="SCOPEGUARD_SRC (a scopeGuard 0.3.x or 0.4.x checkout; CI uses v0.4.0) is not set")
 def test_real_scopeguard_end_to_end(project, ag):
     src = Path(SCOPEGUARD_SRC)
     ext = project / ".specify" / "extensions" / "scopeguard"

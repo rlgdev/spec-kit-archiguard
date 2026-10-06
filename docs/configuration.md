@@ -56,7 +56,7 @@ built-in defaults  <-  archiguard-config.yml  <-  local-config.yml and ARCHIGUAR
 | `edit_guard.enabled` | `true` | the A4.2 hook |
 | `edit_guard.always_readonly` | standards, `.specify/archiguard/**`, `.specify/extensions/archiguard/**`, `specs/*/gates/**/*.json` | never editable by an agent |
 | `edit_guard.after_handover` | `spec.md`, `ba/**`, `handover.yml` | read-only once the feature has a handover record |
-| `edit_guard.after_signoff` | `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, `contracts/**` | read-only once the design is signed |
+| `edit_guard.after_signoff` | `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, `contracts/**`, `gates/signoff.json` | read-only once the design is signed |
 | `edit_guard.human_only` | `signoff`, `reopen`, `resolve`, `ledger add`, `ledger revoke` | archiGuard subcommands an agent may not run from its shell tool |
 | `fitness.provider` | `graph-free` | `graph` is reserved for a code-graph provider in a later version |
 | `options` | `{}` | per-check settings (below) |
@@ -131,7 +131,10 @@ See [plugin-contract.md](plugin-contract.md).
 | `A3.5.require_ids` | `story` | `story`: tasks in user-story phases must carry requirement ids; `all`; `off` |
 | `A3.5.require_marker` / `carries_marker` | `false` / `Carries:` | require the ids after an explicit marker |
 | `A3.5.test_first_prefixes` | `[AC]` | ids whose test task must come before their implementation tasks |
+| `A3.5.test_task_pattern` | `(?i)\b(tests?\|spec\|scenario\|acceptance\|verify)\b` | regex that marks a task as a test task (tests-first check) |
 | `A3.5.fitness_marker` | `[FITNESS]` | the marker of fitness-test tasks (A4.4 ticks them) |
+| `A3.5.fitness_tasks` | `true` | every rule with a code check needs a fitness-test task that names it |
+| `A3.5.rules` | `true` | `false`: when the applicable rules cannot be resolved (no or stale lock), A3.5 skips the rule checks with a note instead of an error |
 | `A3.5.id_prefixes`, `A4.6.id_prefixes` | `UC SC AC BR D FR NFR` | the requirement id prefixes |
 | `A3.6.report` | `gates/analyze-report.md` | where `/speckit.analyze` saves its report |
 | `A3.7.id_pattern` | ADR, WVR, WAIVER, CLDD, SECD, DATD ids | the ids A3.7 treats as cited decisions |
@@ -141,4 +144,5 @@ See [plugin-contract.md](plugin-contract.md).
 | `H4.prefixes` | `[AC, BR]` | ids that need a test before the handover |
 | `handover.checks` | `[H1 ... H6]` | the entry checks `archiguard handover` runs |
 | `scope.require_deferral_reference` | `false` | a scope deferral must cite an RFI or a ledger entry |
+| `scope.deferral_reference_pattern` | `\b(?:RFI\|ADR\|CLDD\|SECD\|DATD\|WVR)-\d+\b` | regex of the reference a deferral must cite (with `require_deferral_reference`) |
 | `ci.exclude_features` | `[]` | feature directory globs `archiguard ci` skips |

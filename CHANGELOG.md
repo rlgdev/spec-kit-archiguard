@@ -10,6 +10,12 @@ All notable changes to archiGuard are documented here. The format follows
 
 - The bash and PowerShell launchers reject the Windows Store `python3` alias stub (it prints an install hint and
   exits 0) with the same marker check auditGuard and Guardians use; the header comment already promised it.
+- A plug-in gate whose command is not a `.py` file (a shell script or binary) is probed with `<command> --version`
+  directly, as docs/plugin-contract.md says; it was run through archiGuard's Python and every `version:` constraint
+  on such a gate failed with exit 2.
+- `docs/configuration.md` documents all options the engine reads: `A3.5.test_task_pattern`, `A3.5.fitness_tasks`,
+  `A3.5.rules` and `scope.deferral_reference_pattern` were missing from the Options table, and the
+  `edit_guard.after_signoff` default lists `gates/signoff.json`.
 
 ### Changed
 

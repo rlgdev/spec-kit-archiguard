@@ -38,7 +38,8 @@ def _installed_version(ctx: GateContext, manifest: GateManifest, script: Path) -
             if v:
                 return str(v)
     try:
-        proc = subprocess.run([sys.executable, str(script), "--version"], capture_output=True, text=True, timeout=60,
+        argv = [sys.executable, str(script)] if script.suffix == ".py" else [str(script)]
+        proc = subprocess.run(argv + ["--version"], capture_output=True, text=True, timeout=60,
                               stdin=subprocess.DEVNULL)
     except (OSError, subprocess.TimeoutExpired):
         return None
