@@ -6,9 +6,12 @@
 mode: enforce
 
 ids:
+  # scopeGuard 0.4+: trace use cases instead of user stories (headings "### UC-001 - ...", task labels [UC-001]):
+  # story_key: UC
+  # story_name: Use Case
   # Requirement ID prefixes that belong to the traced scope: the BA hierarchy of the formal handover
   # (D <- BR <- AC <- SC <- UC; SC is a BA scenario here, not a Spec Kit success criterion) plus
-  # Spec Kit's FR / NFR. Use cases are traced as stories once scopeGuard takes a configurable story key (UC).
+  # Spec Kit's FR / NFR. Use cases are traced as stories with the story key above.
   requirement_prefixes: [SC, AC, BR, D, FR, NFR]
 
 plan:

@@ -43,7 +43,8 @@ handover 4->5" (draft v0.2) as a Spec Kit extension, a preset and a workflow.
   approver and an expiry date.
 - **Design sign-off** (`archiguard signoff`, `reopen`) on green evidence, on a committed design on the feature
   branch, pinning the hashes of every design artefact.
-- **Pluggable gates**: scopeGuard (`>=0.3.0,<0.5`) as the `scope` gate through an adapter, with an optional
+- **Pluggable gates**: scopeGuard (`>=0.3.0,<0.5`; with 0.4 `configure` recommends its `integration: embedded`, and
+  `scope-config.yml` can trace use cases with `story_key: UC`) as the `scope` gate through an adapter, with an optional
   sha256 pin; any gate speaking the archiGuard protocol registered under `gates:`.
 - `archiguard-config.yml`: `integration: inline | hooks`, `mode: enforce | report`, the pipeline per
   command, budgets, loop bounds, standards, domain map, ledger, sign-off evidence, tests, edit guard.

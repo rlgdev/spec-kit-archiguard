@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from . import __version__, standards
-from .common import EXTENSIONS_YML, ArchiGuardError, read_text, rel_path, write_text
+from .common import EXTENSIONS_YML, ArchiGuardError, read_text, rel_path, version_satisfies, write_text
 from .config import COMMANDS, Config, short_command
 from .ledger import Ledger
 from .runner import effective_integration
@@ -189,6 +189,18 @@ def run_configure(root: Path, cfg: Config, dry_run: bool) -> Tuple[str, Dict[str
             version = str((yamlio.load_file(sg_yml).get("extension") or {}).get("version"))
             lines.append(f"  scope gate    : {ext} {version} (required {reg.get('version') or 'any'}); its own hooks are switched off")
             readiness["scopeguard"] = version
+            if ext == "scopeguard" and version_satisfies(version, ">=0.4.0"):
+                sg_cfg = root / ".specify" / "extensions" / ext / "scopeguard-config.yml"
+                integration = None
+                if sg_cfg.is_file():
+                    try:
+                        integration = (yamlio.load_file(sg_cfg) or {}).get("integration")
+                    except ArchiGuardError:
+                        integration = None
+                if integration != "embedded":
+                    lines.append("  NOTE          : set 'integration: embedded' in .specify/extensions/scopeguard/scopeguard-config.yml, "
+                                 "so scopeGuard's own configure keeps its hooks off as well")
+                readiness["scopeguard_integration"] = integration
         else:
             lines.append(f"  scope gate    : MISSING - install the {ext} extension (the scope gate exits 2 until then)")
             readiness["scopeguard"] = None

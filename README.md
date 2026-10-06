@@ -89,8 +89,9 @@ specify extension add archiguard --from https://github.com/rlgdev/spec-kit-archi
 #    saves the /speckit.analyze report, and adds the archiGuard sections to the plan and tasks templates
 specify preset add --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.1.0/archiguard-preset.zip
 
-# 3. the scope gate's engine (do NOT add the scopeguard-templates preset: archiGuard wraps the commands)
-specify extension add scopeguard --from https://github.com/rlgdev/spec-kit-scopeguard/releases/download/v0.3.0/scopeguard.zip
+# 3. the scope gate's engine (do NOT add the scopeguard-templates preset: archiGuard wraps the commands).
+#    With scopeGuard 0.4+, set 'integration: embedded' in .specify/extensions/scopeguard/scopeguard-config.yml
+specify extension add scopeguard --from https://github.com/rlgdev/spec-kit-scopeguard/releases/download/v0.4.0/scopeguard.zip
 
 # 4. apply the config: archiGuard's and scopeGuard's hooks off (inline), the edit guard wired
 bash .specify/extensions/archiguard/scripts/bash/archiguard.sh configure

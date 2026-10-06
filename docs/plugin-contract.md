@@ -114,5 +114,5 @@ the edit guard blocks it.
 --feature-dir <dir> [--config <file>] --json` and maps each `violation` item to a finding (with the
 spec excerpt and the fix row), each deferred item to a waiver, and scopeGuard's own findings by level.
 `inventory` returns the scope contract as text for step A. archiGuard accepts scopeGuard
-`>=0.3.0,<0.5` by default and switches scopeGuard's own hooks off when the scope gate is in the
+`>=0.3.0,<0.5` by default (0.4 adds `integration: embedded` and the `UC` story key) and switches scopeGuard's own hooks off when the scope gate is in the
 pipeline, so every scope check runs once, inside archiGuard's budget.

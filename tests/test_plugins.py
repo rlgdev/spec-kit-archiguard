@@ -208,4 +208,5 @@ def test_real_scopeguard_end_to_end(project, ag):
     assert r.code == 0, r
     proc = subprocess.run([sys.executable, str(ext / "scripts" / "python" / "scopeguard.py"), "--version"],
                           capture_output=True, text=True)
-    assert "0.3" in (proc.stdout + proc.stderr)
+    from archiguard_core.common import version_satisfies
+    assert version_satisfies((proc.stdout + proc.stderr).split()[-1], ">=0.3.0,<0.5")

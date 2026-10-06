@@ -241,3 +241,16 @@ def test_tests_are_required_only_for_the_handover_scope(project, ag):
           'class PlaceOrderTest {\n    @Test @Tag("AC-001") @Tag("BR-001")\n    void createsOneLinePerItem() {}\n}\n')
     r = ag(project, "check", "H", "H4")
     assert r.code == 0, r
+
+
+def test_configure_recommends_scopeguard_embedded_mode(project, ag):
+    write(project, ".specify/extensions.yml", EXTENSIONS_YML)
+    edit(project, CFG, "      - { gate: A3, run: [A3.1] }", "      - { gate: A3, run: [A3.1] }\n      - { gate: scope, run: [inventory] }")
+    write(project, ".specify/extensions/scopeguard/extension.yml", 'extension:\n  id: scopeguard\n  version: "0.4.0"\n')
+    r = ag(project, "configure", feature=False)
+    assert "set 'integration: embedded'" in r.out, r
+    write(project, ".specify/extensions/scopeguard/scopeguard-config.yml", "integration: embedded\n")
+    assert "set 'integration: embedded'" not in ag(project, "configure", feature=False).out
+    write(project, ".specify/extensions/scopeguard/extension.yml", 'extension:\n  id: scopeguard\n  version: "0.3.0"\n')
+    write(project, ".specify/extensions/scopeguard/scopeguard-config.yml", "integration: inline\n")
+    assert "set 'integration: embedded'" not in ag(project, "configure", feature=False).out
