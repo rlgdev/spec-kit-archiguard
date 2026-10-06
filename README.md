@@ -1,7 +1,7 @@
 # archiGuard for Spec Kit
 
 [![CI](https://github.com/rlgdev/spec-kit-archiguard/actions/workflows/ci.yml/badge.svg)](https://github.com/rlgdev/spec-kit-archiguard/actions/workflows/ci.yml)
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-lightgrey.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **Deterministic architecture gates for [GitHub Spec Kit](https://github.com/github/spec-kit).**
 A feature stays inside its bounded context, the plan shows how it meets every architecture rule that
@@ -371,4 +371,4 @@ To release, bump the version in `extension.yml`, `preset/preset.yml`, the workfl
 
 ## License
 
-Proprietary - all rights reserved. See [LICENSE](LICENSE).
+[MIT](LICENSE)

@@ -13,7 +13,7 @@
       "download_url": "https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.1.0/archiguard-preset.zip",
       "homepage": "https://github.com/rlgdev/spec-kit-archiguard",
       "documentation": "https://github.com/rlgdev/spec-kit-archiguard/blob/main/preset/README.md",
-      "license": "Proprietary",
+      "license": "MIT",
       "requires": {
         "speckit_version": ">=1.0.1"
       },

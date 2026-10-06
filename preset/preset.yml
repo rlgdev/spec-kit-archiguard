@@ -7,7 +7,7 @@ preset:
   description: "Makes archiGuard's architecture gates mandatory steps of /speckit.plan, /speckit.tasks and /speckit.implement, saves the /speckit.analyze report for A3.6, and adds the Integration Points, Architecture Conformance, Scope Coverage and Fitness sections to the templates (pairs with the archiguard extension)"
   author: "rlgdev"
   repository: "https://github.com/rlgdev/spec-kit-archiguard"
-  license: "Proprietary"
+  license: "MIT"
 
 requires:
   speckit_version: ">=1.0.1"

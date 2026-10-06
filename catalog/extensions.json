@@ -14,7 +14,7 @@
       "homepage": "https://github.com/rlgdev/spec-kit-archiguard",
       "documentation": "https://github.com/rlgdev/spec-kit-archiguard/blob/main/README.md",
       "changelog": "https://github.com/rlgdev/spec-kit-archiguard/blob/main/CHANGELOG.md",
-      "license": "Proprietary",
+      "license": "MIT",
       "category": "process",
       "effect": "read-write",
       "requires": {

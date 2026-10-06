@@ -8,7 +8,7 @@ extension:
   author: "rlgdev"
   repository: https://github.com/rlgdev/spec-kit-archiguard
   homepage: https://github.com/rlgdev/spec-kit-archiguard
-  license: Proprietary
+  license: MIT
   category: process
   effect: read-write
 
