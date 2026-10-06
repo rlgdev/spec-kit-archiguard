@@ -6,3 +6,4 @@ dist/
 # evidence the gates write when you run them on the examples
 examples/**/gates/
 examples/**/reports/
+pytest-report.xml
