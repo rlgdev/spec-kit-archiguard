@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "archiguard-sdd"
   name: "Design and implement under archiGuard gates"
-  version: "0.1.0"
+  version: "0.1.1"
   author: "rlgdev"
   description: "plan -> tasks -> analyze (A3.6) -> design authority sign-off -> implement <-> converge -> handover 4->5 -> deterministic test loop -> compliance report -> PR approval. Starts after the formal handover from the BA specification tool to Spec Kit; requires the archiguard extension."
 

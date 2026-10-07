@@ -5,5 +5,5 @@ Standard library only; Python 3.9+. PyYAML is used when importable, otherwise
 a built-in YAML-subset reader with the same results on archiGuard's files.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 TOOL = "archiguard"

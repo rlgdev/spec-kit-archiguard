@@ -85,15 +85,15 @@ From your Spec Kit project root:
 
 ```bash
 # 1. the extension: the gate runner, the checkers, the commands, hooks and the edit guard, the config files
-specify extension add archiguard --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.1.0/archiguard.zip
+specify extension add archiguard --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.1.1/archiguard.zip
 
 # 2. the preset: makes the gates steps of /speckit.plan, /speckit.tasks and /speckit.implement,
 #    saves the /speckit.analyze report, and adds the archiGuard sections to the plan and tasks templates
-specify preset add --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.1.0/archiguard-preset.zip
+specify preset add --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.1.1/archiguard-preset.zip
 
 # 3. the scope gate's engine (do NOT add the scopeguard-templates preset: archiGuard wraps the commands).
 #    With scopeGuard 0.4+, set 'integration: embedded' in .specify/extensions/scopeguard/scopeguard-config.yml
-specify extension add scopeguard --from https://github.com/rlgdev/spec-kit-scopeguard/releases/download/v0.4.0/scopeguard.zip
+specify extension add scopeguard --from https://github.com/rlgdev/spec-kit-scopeguard/releases/download/v0.4.1/scopeguard.zip
 
 # 4. apply the config: archiGuard's and scopeGuard's hooks off (inline), the edit guard wired
 bash .specify/extensions/archiguard/scripts/bash/archiguard.sh configure
@@ -169,7 +169,7 @@ code has two planted violations.
 
 ```text
 $ archiguard run plan b
-archiGuard 0.1.0 | speckit.plan · step B | feature: specs/001-place-order | iteration 0 (budget 3)
+archiGuard 0.1.1 | speckit.plan · step B | feature: specs/001-place-order | iteration 0 (budget 3)
   [PASS] A0 · A0.5 relations in the plan
   [PASS] A0 · A0.4 vocabulary                   1 finding(s), report mode
   [FAIL] A3 · A3.3 check-plan                   1 blocking
@@ -338,7 +338,7 @@ and verifies the ledger. It never loops and never writes evidence.
 python .specify/extensions/archiguard/scripts/python/archiguard.py ci --junit reports/archiguard.xml
 ```
 
-[docs/ci.md](docs/ci.md) has a GitHub Actions job (or `uses: rlgdev/spec-kit-archiguard@v0.1.0`) and a
+[docs/ci.md](docs/ci.md) has a GitHub Actions job (or `uses: rlgdev/spec-kit-archiguard@v0.1.1`) and a
 Bitbucket Pipelines step.
 
 ## What archiGuard does and does not prove
@@ -368,7 +368,7 @@ Run `configure` of scopeGuard afterwards if you keep it, to turn its own hooks b
 python -m pytest -q            # engine tests (set SCOPEGUARD_SRC to a scopeGuard checkout for the integration test)
 python tools/build.py --check  # versions, manifests and catalogs agree (CI)
 python tools/build.py          # dist/archiguard.zip, dist/archiguard-preset.zip, dist/archiguard-sdd.yml, dist/SHA256SUMS
-bash tools/e2e-speckit.sh https://github.com/rlgdev/spec-kit-scopeguard/releases/download/v0.4.0/scopeguard.zip   # install into a fresh Spec Kit project together with scopeGuard (the pin of the install step and CI; a local scopeguard.zip path works too) and drive it (needs `specify`)
+bash tools/e2e-speckit.sh https://github.com/rlgdev/spec-kit-scopeguard/releases/download/v0.4.1/scopeguard.zip   # install into a fresh Spec Kit project together with scopeGuard (the pin of the install step and CI; a local scopeguard.zip path works too) and drive it (needs `specify`)
 ```
 
 To release, bump the version in `extension.yml`, `preset/preset.yml`, the workflow,

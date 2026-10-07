@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: archiguard
   name: "archiGuard"
-  version: "0.1.0"
+  version: "0.1.1"
   description: "Architecture gates for Spec Kit: A0 domain guard, A3 plan conformance, A4 fitness functions and the handover 4->5, with one gate runner, per-step iteration budgets and standards bound through a lock file"
   author: "rlgdev"
   repository: https://github.com/rlgdev/spec-kit-archiguard

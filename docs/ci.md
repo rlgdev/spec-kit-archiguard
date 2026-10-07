@@ -42,7 +42,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - uses: rlgdev/spec-kit-archiguard@v0.1.0
+      - uses: rlgdev/spec-kit-archiguard@v0.1.1
         with:
           features: all           # or specs/001-my-feature
           junit: reports/archiguard.xml

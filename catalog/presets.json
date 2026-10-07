@@ -6,11 +6,11 @@
     "archiguard-templates": {
       "name": "archiGuard Templates",
       "id": "archiguard-templates",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Makes archiGuard's architecture gates mandatory steps of /speckit.plan, /speckit.tasks and /speckit.implement and adds the Integration Points, Architecture Conformance, Scope Coverage and Fitness sections to the templates.",
       "author": "rlgdev",
       "repository": "https://github.com/rlgdev/spec-kit-archiguard",
-      "download_url": "https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.1.0/archiguard-preset.zip",
+      "download_url": "https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.1.1/archiguard-preset.zip",
       "homepage": "https://github.com/rlgdev/spec-kit-archiguard",
       "documentation": "https://github.com/rlgdev/spec-kit-archiguard/blob/main/preset/README.md",
       "license": "MIT",

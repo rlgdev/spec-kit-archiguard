@@ -205,7 +205,7 @@ SCOPEGUARD_SRC = os.environ.get("SCOPEGUARD_SRC", "")
 
 
 @pytest.mark.skipif(not SCOPEGUARD_SRC or not Path(SCOPEGUARD_SRC, "extension.yml").is_file(),
-                    reason="SCOPEGUARD_SRC (a scopeGuard 0.3.x or 0.4.x checkout; CI uses v0.4.0) is not set")
+                    reason="SCOPEGUARD_SRC (a scopeGuard 0.3.x or 0.4.x checkout; CI uses v0.4.1) is not set")
 def test_real_scopeguard_end_to_end(project, ag):
     src = Path(SCOPEGUARD_SRC)
     ext = project / ".specify" / "extensions" / "scopeguard"

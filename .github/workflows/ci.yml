@@ -11,7 +11,7 @@ permissions:
 
 env:
   # the scopeGuard release used by the integration test and the e2e install (= the Guardians bundle pin)
-  SCOPEGUARD_TAG: v0.4.0
+  SCOPEGUARD_TAG: v0.4.1
 
 jobs:
   test:

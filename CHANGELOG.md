@@ -6,6 +6,8 @@ All notable changes to archiGuard are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-07
+
 ### Added
 
 - `tools/build.py --check` (CI): versions equal, the files the manifests name exist, the catalog `provides` counts
@@ -18,7 +20,7 @@ All notable changes to archiGuard are documented here. The format follows
 
 ### Changed
 
-- CI tests the scopeGuard integration and the end-to-end install against scopeGuard 0.4.0, the version the
+- CI tests the scopeGuard integration and the end-to-end install against scopeGuard 0.4.1, the version the
   Guardians bundle pins (was 0.3.0).
 
 ### Fixed
