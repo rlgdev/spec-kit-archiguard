@@ -28,7 +28,7 @@ jobs:
             python: "3.13"
             yaml: pyyaml       # the engine prefers PyYAML when importable; the parity tests need it
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
@@ -58,7 +58,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -75,7 +75,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: bash launcher on the example (expects 1, then 3)
         shell: bash
         working-directory: examples/orders
@@ -108,7 +108,7 @@ jobs:
       matrix:
         speckit: ["specify-cli", "specify-cli==1.0.1"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -120,7 +120,7 @@ jobs:
     name: GitHub Action self-test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: run the action on the example (must fail on ARCH-201)
         id: gate
         continue-on-error: true
