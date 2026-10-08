@@ -18,7 +18,7 @@ Then run archiGuard's A3.6 check from the repository root (the variant that matc
 - `ps`: `.specify/extensions/archiguard/scripts/powershell/archiguard.ps1 check A3 A3.6 --feature-dir <FEATURE_DIR>`
 - `py`: `python .specify/extensions/archiguard/scripts/python/archiguard.py check A3 A3.6 --feature-dir <FEATURE_DIR>`
 
-If the checker is not there (the shell finds no such file, for example exit `127`), archiGuard is not installed here:
+If the checker is not there (the shell or Python says the file does not exist: `No such file or directory`, `can't open file`, `is not recognized`; whatever the exit code), archiGuard is not installed here:
 report `archiGuard not installed - skipped (remove the preset: specify preset remove archiguard-templates)` and
 skip this section (the report file is for archiGuard only).
 

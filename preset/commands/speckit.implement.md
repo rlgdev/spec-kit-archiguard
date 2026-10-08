@@ -23,7 +23,7 @@ Run the archiGuard runner from the repository root. Use the variant that matches
 
 What to do with the result:
 
-- **The runner is not there** (the shell finds no such file, for example exit `127`): archiGuard is not installed in this
+- **The runner is not there** (the shell or Python says the file does not exist: `No such file or directory`, `can't open file`, `is not recognized`; whatever the exit code): archiGuard is not installed in this
   project. Report `archiGuard not installed - skipped (remove the preset: specify preset remove archiguard-templates)`,
   skip step B and continue the command normally.
 - **It prints `skipped`.** archiGuard runs through hooks in this project. Continue normally and skip step B.
