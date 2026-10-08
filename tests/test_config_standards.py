@@ -148,6 +148,36 @@ def test_yaml_round_trip():
     assert yamlio.loads(yamlio.dumps(data)) == data
 
 
+# Spec Kit writes .specify/extensions.yml with PyYAML's dump, which folds long quoted scalars at 80 columns
+SPEC_KIT_DUMP = (
+    "hooks:\n"
+    "  before_plan:\n"
+    "  - extension: scopeguard\n"
+    "    command: speckit.scopeguard.inventory\n"
+    "    description: '(integration: hooks) Put the full scope contract in front of the\n"
+    "      planner'\n"
+    "    condition: null\n"
+    "  - extension: other\n"
+    "    description: 'it''s\n"
+    "\n"
+    "      two lines'  # a comment\n"
+    "    prompt: \"a \\\"quoted\\\" word and a long line that PyYAML ends with an escaped\\\n"
+    "      \\ break\"\n"
+    "    enabled: true\n"
+)
+
+
+def test_yaml_reads_spec_kits_folded_quoted_scalars():
+    hooks = yamlio.parse_builtin(SPEC_KIT_DUMP, "extensions.yml")["hooks"]["before_plan"]
+    assert hooks[0] == {"extension": "scopeguard", "command": "speckit.scopeguard.inventory",
+                        "description": "(integration: hooks) Put the full scope contract in front of the planner",
+                        "condition": None}
+    assert hooks[1] == {"extension": "other", "description": "it's\ntwo lines",
+                        "prompt": 'a "quoted" word and a long line that PyYAML ends with an escaped break', "enabled": True}
+    yaml = pytest.importorskip("yaml")
+    assert yamlio.parse_builtin(SPEC_KIT_DUMP, "extensions.yml") == yaml.safe_load(SPEC_KIT_DUMP)
+
+
 def test_yaml_errors_name_the_line():
     with pytest.raises(ArchiGuardError, match=r"x\.yml:2: unexpected indentation"):
         yamlio.parse_builtin("a: 1\n  b: [2\n", "x.yml")

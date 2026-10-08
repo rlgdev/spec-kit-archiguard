@@ -73,6 +73,12 @@ each iteration**, so the final verdict describes the artefact that leaves the st
    specification). The runner writes `gates/escalation-<command>-<step>.md`; the agent completes every
    `TODO(agent)` in it (what it tried, the blocker, the decision needed) and ends the command.
 
+A command that ends at a gate (an escalation, or `cannot evaluate` with exit `2`) does not reach its
+post-execution hooks, also those of other extensions (git's commit, agent-context's update). Run inside the
+wrapped command (`integration: inline`) or as step A's `before_` hook, the runner lists the enabled ones under
+`NOT RUN` and the agent reports them; they run when the command is run again and passes.
+In a new project that is the first `/speckit.plan` until the standards lock and the handover record exist.
+
 Step A starts a new run of the command and resets the counter. A pass, an escalation and an error are
 terminal: the next step B starts with the full budget.
 
@@ -107,13 +113,24 @@ Spec Kit asks you to confirm each extension install from a URL (steps 1 and 3); 
 <details>
 <summary>Install through a catalog (for teams)</summary>
 
+A project catalog file (`.specify/extension-catalogs.yml`, `.specify/preset-catalogs.yml`) **replaces** Spec Kit's
+own catalogs, so add those first; without them every other extension disappears from `specify extension search`,
+`info` and `update`. (With a user-level `~/.specify/` catalog file, add its entries instead.)
+
 ```bash
-specify extension catalog add https://raw.githubusercontent.com/rlgdev/spec-kit-archiguard/main/catalog/extensions.json --name archiguard --install-allowed
+specify extension catalog add https://raw.githubusercontent.com/github/spec-kit/main/extensions/catalog.json            --name default    --priority 1  --install-allowed
+specify extension catalog add https://raw.githubusercontent.com/github/spec-kit/main/extensions/catalog.community.json  --name community  --priority 20 --no-install-allowed
+specify extension catalog add https://raw.githubusercontent.com/rlgdev/spec-kit-archiguard/main/catalog/extensions.json --name archiguard --priority 10 --install-allowed
 specify extension add archiguard
 
-specify preset catalog add https://raw.githubusercontent.com/rlgdev/spec-kit-archiguard/main/catalog/presets.json --name archiguard --install-allowed
+specify preset catalog add https://raw.githubusercontent.com/github/spec-kit/main/presets/catalog.json                  --name default    --priority 1  --install-allowed
+specify preset catalog add https://raw.githubusercontent.com/github/spec-kit/main/presets/catalog.community.json        --name community  --priority 20 --no-install-allowed
+specify preset catalog add https://raw.githubusercontent.com/rlgdev/spec-kit-archiguard/main/catalog/presets.json       --name archiguard --priority 10 --install-allowed
 specify preset add archiguard-templates
 ```
+
+`community` comes after the archiGuard catalog: it is discovery-only, and the catalog you trust must win a
+shared id.
 
 For a corporate catalog, mirror both archives and the scopeGuard release into the internal catalog and
 pin them by version and sha256 (`dist/SHA256SUMS` is attached to every release).
@@ -356,11 +373,14 @@ Bitbucket Pipelines step.
 ## Uninstall
 
 ```bash
-specify preset remove archiguard-templates
+specify preset remove archiguard-templates     # first: the preset wraps /speckit.plan, tasks, implement and analyze
 specify extension remove archiguard
 ```
 
-Run `configure` of scopeGuard afterwards if you keep it, to turn its own hooks back on.
+A preset left behind keeps wrapping the commands; its steps then only report `archiGuard not installed - skipped`.
+If you keep scopeGuard, run its `configure` afterwards to turn its own hooks or steps back on; if it was set to
+`integration: embedded` (archiGuard ran its gate), set `integration: inline` (with its preset) or `hooks` first -
+its `configure` warns while it is embedded without archiGuard.
 
 ## Development
 

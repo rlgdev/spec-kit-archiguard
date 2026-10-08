@@ -251,6 +251,27 @@ class _Flow:
 # --------------------------------------------------------------------------- #
 
 
+def _quote_end(text: str) -> int:
+    """Index of the quote that ends the quoted scalar starting `text`, or -1 ('' and \\" do not end it)."""
+    quote, i = text[0], 1
+    while i < len(text):
+        ch = text[i]
+        if quote == '"' and ch == "\\":
+            i += 2
+            continue
+        if ch == quote:
+            if quote == "'" and i + 1 < len(text) and text[i + 1] == "'":
+                i += 2
+                continue
+            return i
+        i += 1
+    return -1
+
+
+def _quote_closed(text: str) -> bool:
+    return _quote_end(text) >= 0
+
+
 def _strip_comment(line: str) -> str:
     out, quote, prev = [], None, " "
     for ch in line:
@@ -410,6 +431,8 @@ class _BlockParser:
                 self.pos += 1
             return _Flow(text, f"{self.where}:{line.no}").parse()
         if rest[0] in "\"'":
+            if not _quote_closed(rest):
+                rest = self.folded_quoted(line, rest, indent)
             return _Flow(rest, f"{self.where}:{line.no}").parse()
         # plain scalar, possibly continued on more-indented lines
         parts = [rest]
@@ -420,6 +443,36 @@ class _BlockParser:
             parts.append(nxt.content)
             self.pos += 1
         return _plain_scalar(" ".join(parts))
+
+    def folded_quoted(self, line: _Line, first: str, indent: int) -> str:
+        """A quoted scalar continued on more-indented lines (PyYAML's dump folds long ones at 80 columns, as in
+        Spec Kit's .specify/extensions.yml): YAML folding joins the lines with a space, an empty line is a line
+        break, and a trailing backslash in a double-quoted scalar joins without one."""
+        text, breaks, idx = first, 0, line.no      # raw_lines[line.no] is the physical line after this one
+        while not _quote_closed(text):
+            if idx >= len(self.raw_lines):
+                raise self.err(line, "unterminated quoted scalar")
+            raw = self.raw_lines[idx]
+            idx += 1
+            if not raw.strip():
+                breaks += 1
+                continue
+            if len(raw) - len(raw.lstrip(" ")) <= indent:
+                raise self.err(line, "unterminated quoted scalar")
+            part = raw.strip()
+            if breaks:
+                text += "\n" * breaks + part
+            elif first[0] == '"' and (len(text) - len(text.rstrip("\\"))) % 2 == 1:
+                text = text[:-1] + part         # an escaped line break
+            else:
+                text += " " + part
+            breaks = 0
+        end = _quote_end(text)
+        if text[end + 1:].strip().startswith("#"):
+            text = text[:end + 1]               # a comment after the closing quote
+        while self.pos < len(self.lines) and self.lines[self.pos].no <= idx:
+            self.pos += 1
+        return text
 
     @staticmethod
     def _balanced(text: str) -> bool:

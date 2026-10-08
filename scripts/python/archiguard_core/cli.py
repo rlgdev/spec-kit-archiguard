@@ -16,7 +16,7 @@ from .common import (
     find_project_root,
     resolve_feature_dir,
 )
-from .config import load_config
+from .config import load_config, normalise_command
 
 
 def _configure_stdout() -> None:
@@ -141,7 +141,7 @@ def _feature(root: Path, args: argparse.Namespace, required: bool = True) -> Opt
 def run(argv: Optional[Sequence[str]] = None) -> int:
     from . import commands
     from .configure import run_configure
-    from .runner import render_text, run_step, verify
+    from .runner import not_run_line, render_text, run_step, stops_wrapped_command, verify
 
     _configure_stdout()
     argv = list(sys.argv[1:] if argv is None else argv)
@@ -152,6 +152,7 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     as_json = bool(getattr(args, "json", False))
+    root: Optional[Path] = None
     try:
         if args.command == "version":
             print(f"archiguard {__version__}")
@@ -220,6 +221,13 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
         if as_json:
             print(json.dumps({"tool": "archiguard", "version": __version__, "status": "error", "error": str(exc)}, indent=2))
         print(f"archiGuard: ERROR: {exc}", file=sys.stderr)
+        if args.command == "run" and root is not None and not as_json and stops_wrapped_command(args.via, args.step):
+            try:
+                line = not_run_line(root, normalise_command(args.target))
+            except ArchiGuardError:
+                line = None
+            if line:
+                print(line)
         return EXIT_ERROR
     return EXIT_PASS
 

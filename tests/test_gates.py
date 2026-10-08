@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from conftest import (
     ARCH_201_ROW,
     FEATURE,
@@ -102,6 +104,37 @@ def test_a0_domain_map_pin_mismatch_cannot_be_repaired(project, ag):
     assert "[no repair - needs a person]" in r.out
     assert verdict(project, "A0", "A0.1")["status"] == "violation"
     assert "TODO(agent)" in read(project, f"{GATES}/escalation-plan-a.md")
+
+
+@pytest.mark.parametrize("builtin_yaml", [False, True], ids=["pyyaml-if-present", "builtin-reader"])
+def test_a_stop_names_the_other_extensions_hooks_it_skips(project, ag, monkeypatch, builtin_yaml):
+    """A wrapped command that stops at a gate never reaches its post-execution hooks: the runner names them."""
+    from archiguard_core import yamlio
+    monkeypatch.setattr(yamlio, "FORCE_BUILTIN", builtin_yaml)
+    write(project, ".specify/extensions.yml", (      # in Spec Kit's dump style: long descriptions folded at 80 columns
+        "hooks:\n  after_plan:\n"
+        "  - extension: git\n    command: speckit.git.commit\n    enabled: true\n    optional: true\n"
+        "    description: 'Auto-commit after the implementation plan is written, so the design is\n      recorded'\n"
+        "    condition: null\n"
+        "  - extension: agent-context\n    command: speckit.agent-context.update\n    enabled: true\n    optional: false\n"
+        "  - extension: archiguard\n    command: speckit.archiguard.plangate\n    enabled: true\n"
+        "    description: '(integration: hooks) archiGuard step B of /speckit.plan - repair,\n      then escalate'\n"
+        "  - extension: other\n    command: speckit.other.thing\n    enabled: false\n"
+        "  - extension: gated\n    command: speckit.gated.thing\n    enabled: true\n    condition: config.gated.on == true\n"
+        "  after_tasks:\n  - extension: git\n    command: speckit.git.tasks\n    enabled: true\n"))
+    edit(project, f"{FEATURE}/handover.yml", 'map_version: "1.4.0"', 'map_version: "1.3.0"')
+    names = ("NOT RUN: /speckit.plan ends here, so these after_plan hooks of other extensions do not run: "
+             "git: speckit.git.commit (optional); agent-context: speckit.agent-context.update. Tell the user; they run "
+             "when the command is run again and passes.")
+    r = ag(project, "run", "plan", "a", "--via", "hook")       # the hooks path: a before_plan hook stops the command
+    assert r.code == 3 and names in r.out, r
+    assert names not in ag(project, "run", "plan", "a").out    # by hand: no command is stopped
+    edit(project, f"{FEATURE}/handover.yml", 'map_version: "1.3.0"', 'map_version: "1.4.0"')
+    assert "NOT RUN" not in ag(project, "run", "plan", "a", "--via", "hook").out   # no stop, nothing skipped
+    with open(project / ".specify/extensions/archiguard/archiguard-config.yml", "a", encoding="utf-8") as handle:
+        handle.write("typo_key: 1\n")                             # a setup error stops the command as well
+    r = ag(project, "run", "plan", "a", "--via", "hook")
+    assert r.code == 2 and "unknown setting" in r.err and names in r.out, r
 
 
 def test_a0_entity_owned_by_another_context(project, ag):

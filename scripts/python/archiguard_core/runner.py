@@ -6,12 +6,13 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from . import __version__
+from . import __version__, yamlio
 from .common import (
     EXIT_ERROR,
     EXIT_ESCALATE,
     EXIT_FAIL,
     EXIT_PASS,
+    EXTENSIONS_YML,
     GATES_DIRNAME,
     PRESET_REL,
     SPECIFY_DIR,
@@ -59,6 +60,48 @@ def effective_integration(root: Path, cfg: Config) -> Tuple[str, Optional[str]]:
         return "hooks", ("integration is 'inline' but the archiguard-templates preset is not installed or is disabled, "
                          "so the gates run through the hooks")
     return wanted, None
+
+
+def hooks_not_run(root: Path, command: str) -> List[str]:
+    """The other extensions' enabled after_<command> hooks in .specify/extensions.yml. A command that stops at a gate
+    never reaches its Mandatory Post-Execution Hooks, so these do not run this time (git's commit, agent-context's
+    update, ...); they run when the command is run again and passes. A hook with a `condition` is left out: the
+    agent skips those anyway (Spec Kit leaves conditions to its HookExecutor)."""
+    path = root / EXTENSIONS_YML
+    if not path.is_file():
+        return []
+    try:
+        data = yamlio.loads(read_text(path), str(path))
+    except ArchiGuardError:
+        return []
+    hooks = data.get("hooks") if isinstance(data, dict) else None
+    entries = hooks.get(f"after_{short_command(command)}") if isinstance(hooks, dict) else None
+    if isinstance(entries, dict):
+        entries = [entries]
+    out = []
+    for entry in entries if isinstance(entries, list) else []:
+        if not isinstance(entry, dict) or entry.get("extension") == "archiguard":
+            continue
+        if str(entry.get("enabled", True)).strip().lower() in ("false", "no", "off", "0"):
+            continue
+        if entry.get("condition") not in (None, ""):
+            continue
+        out.append(f"{entry.get('extension')}: {entry.get('command')}" + (" (optional)" if entry.get("optional") is True else ""))
+    return out
+
+
+def stops_wrapped_command(via: Optional[str], step: str) -> bool:
+    """Whether a stop at this step ends a wrapped Spec Kit command before its post-execution hooks: inline steps A and
+    B, and step A through the hooks (a before_ hook)."""
+    return via == "inline" or (via == "hook" and step.lower() == "a")
+
+
+def not_run_line(root: Path, command: str) -> Optional[str]:
+    hooks = hooks_not_run(root, command)
+    if not hooks:
+        return None
+    return (f"NOT RUN: /{command} ends here, so these after_{short_command(command)} hooks of other extensions do not "
+            f"run: {'; '.join(hooks)}. Tell the user; they run when the command is run again and passes.")
 
 
 # --------------------------------------------------------------------------- #
@@ -124,6 +167,7 @@ class StepOutcome:
         self.escalation = escalation
         self.reason = reason
         self.skipped = skipped
+        self.not_run: Optional[str] = None   # the NOT RUN line: other extensions' after_ hooks this stop skips (text only)
 
 
 # --------------------------------------------------------------------------- #
@@ -180,6 +224,15 @@ def _combined(ctx: GateContext, cfg: Config, command: str, step: str, groups, *,
 
 
 def run_step(root: Path, cfg: Config, command: str, step: str, feature_dir: Path, *, via: Optional[str] = None) -> StepOutcome:
+    outcome = _run_step(root, cfg, command, step, feature_dir, via=via)
+    # the wrapped command ends at an escalation or a fail-closed stop (inline: steps A and B; hooks: step A, a
+    # before_ hook): name the other extensions' post-execution hooks that do not run because of it
+    if outcome.status in (STATUS_ESCALATED, STATUS_ERROR) and stops_wrapped_command(via, outcome.step):
+        outcome.not_run = not_run_line(root, outcome.command)
+    return outcome
+
+
+def _run_step(root: Path, cfg: Config, command: str, step: str, feature_dir: Path, *, via: Optional[str] = None) -> StepOutcome:
     command = normalise_command(command)
     step = step.lower()
     if step not in ("a", "b"):
@@ -387,6 +440,8 @@ def render_text(outcome: StepOutcome, root: Path, verbose: bool = False) -> str:
         out.append("NEXT: stop. Show the messages above to the user; the step cannot be evaluated until the setup is fixed.")
     elif outcome.step == "b":
         out.append(f"archiGuard: PASS after {c.get('iteration') or 0} repair iteration(s).")
+    if outcome.not_run:
+        out.append(outcome.not_run)
     return "\n".join(out)
 
 
