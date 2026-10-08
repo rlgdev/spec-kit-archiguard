@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from . import __version__, standards
-from .common import EXTENSIONS_YML, ArchiGuardError, read_text, rel_path, version_satisfies, write_text
+from .common import EXTENSIONS_YML, ArchiGuardError, line_ending, read_text, rel_path, version_satisfies, write_text
 from .config import COMMANDS, Config, short_command
 from .ledger import Ledger
 from .runner import effective_integration
@@ -135,7 +135,7 @@ def run_configure(root: Path, cfg: Config, dry_run: bool) -> Tuple[str, Dict[str
                 pass
             except Exception as exc:  # noqa: BLE001 - any parser error means: do not write
                 raise ArchiGuardError(f"refusing to write {EXTENSIONS_YML}: the result would not parse ({exc})")
-            write_text(ext_yml, updated)
+            write_text(ext_yml, updated.replace("\n", line_ending(ext_yml)))
     else:
         changed = []
 

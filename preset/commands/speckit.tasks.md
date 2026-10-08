@@ -32,6 +32,9 @@ Run the archiGuard runner from the repository root. Use the variant that matches
 
 What to do with the result:
 
+- **The runner is not there** (the shell finds no such file, for example exit `127`): archiGuard is not installed in this
+  project. Report `archiGuard not installed - skipped (remove the preset: specify preset remove archiguard-templates)`,
+  skip step B and continue the command normally.
 - **It prints `skipped`.** archiGuard runs through hooks in this project. Continue normally and skip step B.
 - **Exit 0.** The contract is **binding** for this command: the rules in `<FEATURE_DIR>/gates/applicable-rules.json`
   (printed with their `SKILL.md` where step A lists them) and the scope inventory, if printed. Read the `SKILL.md` of
@@ -42,6 +45,9 @@ What to do with the result:
   note's path, and **end the command here**.
 - **Exit 2.** archiGuard cannot evaluate (rulebook, lock, domain map or handover record missing or invalid). Show
   the message and **end the command here**: the gates fail closed.
+- **When you end the command here,** its post-execution hooks do not run: tell the user which ones, as the
+  output lists them under `NOT RUN` (other extensions', for example git's commit). They run when the command
+  is run again and passes.
 
 ## archiGuard (B): exit gates (mandatory, before the Mandatory Post-Execution Hooks and the Completion Report)
 
@@ -73,4 +79,6 @@ Exit codes: **0** pass, **1** resolve, **3** escalate, **2** cannot evaluate.
    for that item in each iteration, the blocker, and the decision needed (fix the artefact, an RFI to the BA, or a
    waiver in the decision ledger). Report `archiGuard: ESCALATED - <n> item(s) could not be resolved` with each item and
    the note's path. **The command ends here**: do not run the post-execution hooks and do not write the Completion Report.
-5. **Exit 2: cannot evaluate.** Show the message and end the command here (fail-closed, no repair).
+   Tell the user which hooks this skips, as the output lists them under `NOT RUN`.
+5. **Exit 2: cannot evaluate.** Show the message and end the command here (fail-closed, no repair). Tell the
+   user which hooks this skips, as the output lists them under `NOT RUN`.

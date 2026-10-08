@@ -31,7 +31,8 @@ ready when all of it is green.
 - **Launchers.** `scripts/bash/<id>.sh`, `scripts/powershell/<id>.ps1` and `scripts/python/<id>.py` stay
   functionally identical across the family: `<ID>_PYTHON`, then `python3` / `python` on PATH (the Windows
   Store stub is rejected by a marker check), then specify-cli's Python under `uv tool dir`, then `uv run`.
-- **Line endings.** LF everywhere (`.gitattributes`); files the tools write are LF and UTF-8.
+- **Line endings.** LF everywhere (`.gitattributes`); files the tools write are LF and UTF-8, except an edit of a
+  file Spec Kit owns (`.specify/extensions.yml`), which keeps that file's line ending (CRLF on Windows).
 - **Configuration.** Unknown keys are errors. A new key gets a commented line in `config-template.yml`, a
   default in the code, a test and a row in `docs/configuration.md`.
 - **Output.** Exit codes `0` ok, `1` findings, `2` cannot run (fail-closed), `3` escalated / reserved for people
