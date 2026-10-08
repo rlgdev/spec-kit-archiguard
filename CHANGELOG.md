@@ -10,10 +10,12 @@ All notable changes to archiGuard are documented here. The format follows
 
 - When a gate stops a wrapped command (an escalation, or `cannot evaluate`; inline steps A and B, and step A through
   the hooks), the runner names the other extensions' enabled `after_<command>` hooks the stopped command skips
-  (`NOT RUN: ...`, for example git's commit or agent-context's update), and the preset tells the agent to report them.
+  (`NOT RUN: ...`, for example git's commit or agent-context's update; a setup error of such a run lists them too, and
+  hooks with a `condition`, which the agent skips anyway, are left out), and the preset tells the agent to report them.
   In a new project the first `/speckit.plan` stops at step A, so these hooks no longer stop running without a word.
-- The preset steps say what to do when the archiGuard extension is gone (`archiGuard not installed - skipped`,
-  remove the preset) and continue the command, instead of leaving it to the agent.
+- The preset steps say what to do when the archiGuard extension is gone (the error names a file under
+  `.specify/extensions/archiguard/`: `archiGuard not installed - skipped`, remove the preset) and continue the command;
+  any other error, such as no `python` on PATH, still ends it.
 
 ### Changed
 
@@ -24,6 +26,9 @@ All notable changes to archiGuard are documented here. The format follows
 
 ### Fixed
 
+- The built-in YAML reader (used without PyYAML) reads quoted scalars folded across lines, as PyYAML's dump writes
+  long ones in Spec Kit's `.specify/extensions.yml` (`description: '... of the` / `planner'`); it stopped with
+  "unterminated string" on every Spec Kit project with a long hook description.
 - `configure` keeps the line endings of `.specify/extensions.yml`. Spec Kit writes it with CRLF on Windows; rewritten
   with LF, `git diff` showed every hook of every other extension removed and added again.
 

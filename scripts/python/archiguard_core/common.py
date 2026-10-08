@@ -101,10 +101,12 @@ def write_text(path: Path, text: str) -> None:
 
 
 def line_ending(path: Path) -> str:
-    """The line ending of an existing file: CRLF when it has one, else LF. A rewrite of a file another tool owns
-    (Spec Kit writes .specify/extensions.yml with the platform's ending) keeps it, so git shows only the edited lines."""
+    """The line ending most lines of an existing file use (CRLF or LF; LF on a tie). A rewrite of a file another tool
+    owns (Spec Kit writes .specify/extensions.yml with the platform's ending) keeps it, so git shows only the edited
+    lines."""
     try:
-        return "\r\n" if b"\r\n" in path.read_bytes() else "\n"
+        data = path.read_bytes()
+        return "\r\n" if 2 * data.count(b"\r\n") > data.count(b"\n") else "\n"
     except OSError:
         return "\n"
 

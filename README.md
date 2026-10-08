@@ -74,8 +74,9 @@ each iteration**, so the final verdict describes the artefact that leaves the st
    `TODO(agent)` in it (what it tried, the blocker, the decision needed) and ends the command.
 
 A command that ends at a gate (an escalation, or `cannot evaluate` with exit `2`) does not reach its
-post-execution hooks, also those of other extensions (git's commit, agent-context's update). The runner lists
-the enabled ones under `NOT RUN` and the agent reports them; they run when the command is run again and passes.
+post-execution hooks, also those of other extensions (git's commit, agent-context's update). Run inside the
+wrapped command (`integration: inline`) or as step A's `before_` hook, the runner lists the enabled ones under
+`NOT RUN` and the agent reports them; they run when the command is run again and passes.
 In a new project that is the first `/speckit.plan` until the standards lock and the handover record exist.
 
 Step A starts a new run of the command and resets the counter. A pass, an escalation and an error are
@@ -372,7 +373,7 @@ Bitbucket Pipelines step.
 ## Uninstall
 
 ```bash
-specify preset remove archiguard-templates     # first: the preset wraps /speckit.plan, tasks and implement around archiGuard
+specify preset remove archiguard-templates     # first: the preset wraps /speckit.plan, tasks, implement and analyze
 specify extension remove archiguard
 ```
 
