@@ -82,6 +82,8 @@ git add -A && git commit -qm "base" && git branch -M main && git checkout -qb 00
 
 expect 0 "${A[@]}" run plan a --via inline
 contains "SCOPE CONTRACT"
+contains "stamped now"
+[[ -f specs/001-place-order/scopeguard-stamp.json ]] || fail "step A did not stamp the scope"
 contains "| ARCH-201 |"
 contains "1 user stories, 6 requirements"
 expect 1 "${A[@]}" run plan b --via inline

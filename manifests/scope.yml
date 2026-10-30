@@ -6,8 +6,10 @@ version: 0.1.0
 implementation: external
 protocol: scopeguard
 description: >-
-  No requirement is dropped between spec, plan, tasks and implement.
+  No requirement is dropped between spec, plan, tasks and implement, and the scope a feature is planned
+  against is the one it was handed over with (the scope stamp, scopeGuard 0.5+).
 checks:
+  stamp: { name: scope stamp, target: spec, repairable: false, checker: false }
   inventory: { name: scope inventory, target: spec, repairable: true, checker: false }
   plan: { name: scope coverage spec -> plan, target: plan, repairable: true }
   tasks: { name: scope coverage plan -> tasks, target: tasks, repairable: true }

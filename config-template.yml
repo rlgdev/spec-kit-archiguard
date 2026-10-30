@@ -51,7 +51,7 @@ pipeline:
     step_a:                   # right after Setup
       - { gate: A0, run: [A0.1, A0.2, A0.3], repair: false }   # red = stop at once (the agent cannot repair the map)
       - { gate: A3, run: [A3.1] }                              # context loader: the applicable rules
-      - { gate: scope, run: [inventory] }                      # scopeGuard engine: the scope contract
+      - { gate: scope, run: [stamp, inventory] }               # scopeGuard engine: the scope stamp (0.5+) and the scope contract
     step_b:                   # before the post-execution hooks and the completion report
       max_iterations: 3
       gates:
@@ -85,7 +85,7 @@ loops:
 gates:
   scope:
     extension: scopeguard                   # installed Spec Kit extension that provides the gate
-    version: ">=0.3.0,<0.5"                 # pinned range; archiGuard refuses another version
+    version: ">=0.3.0,<0.6"                 # pinned range; archiGuard refuses another version (0.5 adds the scope stamp)
     command: scripts/python/scopeguard.py   # relative to .specify/extensions/<extension>/
     sha256: null                            # optional: sha256 of that file as released (LF line endings), quoted
     config: .specify/extensions/archiguard/scope-config.yml   # scopeGuard settings when archiGuard calls it
@@ -109,7 +109,7 @@ edit_guard:                  # A4.2 (Claude Code hook): read-only paths and comm
   enabled: true
   human_only: [signoff, reopen, resolve, ledger add, ledger revoke]   # archiguard subcommands an agent may not run
   # policy (standards, lock, ledger), the archiGuard engine and this config, and the gate evidence (verdict files)
-  always_readonly: [".specify/standards/**", ".specify/archiguard/**", ".specify/extensions/archiguard/**", "specs/*/gates/**/*.json"]
+  always_readonly: [".specify/standards/**", ".specify/archiguard/**", ".specify/extensions/archiguard/**", "specs/*/gates/**/*.json", "specs/*/scopeguard-stamp.json"]
   after_handover: ["specs/*/spec.md", "specs/*/ba/**", "specs/*/handover.yml"]
   after_signoff: ["specs/*/plan.md", "specs/*/research.md", "specs/*/data-model.md", "specs/*/quickstart.md", "specs/*/contracts/**", "specs/*/gates/signoff.json"]
 

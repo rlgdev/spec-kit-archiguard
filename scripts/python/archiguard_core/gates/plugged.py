@@ -110,6 +110,24 @@ def run_scopeguard(ctx: GateContext, manifest: GateManifest, check: str, res: Ch
             raise ArchiGuardError(f"scopeGuard inventory failed (exit {code}): {(err or out).strip()[:400]}")
         res.info = [line for line in out.rstrip().split("\n")]
         return
+    if check == "stamp":
+        # scopeGuard 0.5+: the scope stamp at hand-over. Exit 0 = stamped or current (the text is the contract),
+        # exit 1 = spec.md changed after the stamp and no reason was given: a person decides, no agent repairs.
+        code, out, err = _run(argv, ctx.root)
+        lines = [line for line in out.rstrip().split("\n") if line]
+        if code == 0:
+            res.info = lines
+            return
+        if code == 1:
+            res.repairable = False
+            res.info = lines
+            res.add(Finding(rule="scope-stamp", where=f"{ctx.feature}/spec.md",
+                            message="spec.md changed after the scope stamp: " + "; ".join(
+                                line.strip() for line in lines if line.lstrip().startswith(("-", "+", "~"))),
+                            fix_hint="a person decides: approve the change (scopeguard stamp --reason \"...\") or restore "
+                                     "spec.md from git; the agent edits neither spec.md nor scopeguard-stamp.json"))
+            return
+        raise ArchiGuardError(f"scopeGuard stamp failed (exit {code}): {(err or out).strip()[:400]}")
     code, out, err = _run(argv + ["--json"], ctx.root)
     try:
         payload = json.loads(out)
@@ -119,17 +137,30 @@ def run_scopeguard(ctx: GateContext, manifest: GateManifest, check: str, res: Ch
         raise ArchiGuardError(f"scopeGuard {check}: {payload.get('error') or err.strip()[:400]}")
     for gate in payload.get("gates") or []:
         res.data["summary"] = gate.get("summary")
+        if gate.get("stamp") is not None:
+            res.data["stamp"] = gate.get("stamp")
+        if gate.get("sealed"):
+            res.data["sealed"] = gate.get("sealed")
+        if gate.get("unrepairable"):
+            # scopeGuard 0.5+: spec.md changed after the scope stamp. Not a repair for the agent: the runner
+            # escalates at once and the escalation note names the decision (re-stamp with a reason, or restore).
+            res.repairable = False
         skeleton = gate.get("fix_skeleton") or []
         target = gate.get("fix_target")
         for item in gate.get("items") or []:
             verdict = item.get("verdict")
             if verdict == "violation":
                 fix = next((row for row in skeleton if row.startswith(f"| {item.get('id')} |")), None)
+                unrepairable = item.get("repairable") is False
+                if unrepairable:
+                    res.repairable = False
                 res.add(Finding(
                     rule=str(item.get("id")),
                     message=f"{item.get('id')} {item.get('title') or ''}: {item.get('detail')}",
                     where=item.get("location") or target,
-                    fix_hint=(f"add to {target}: {fix}" if fix and target else None),
+                    fix_hint=("a person decides: scopeguard stamp --reason \"...\" or restore spec.md; the agent edits "
+                              "neither spec.md nor scopeguard-stamp.json") if unrepairable
+                    else (f"add to {target}: {fix}" if fix and target else None),
                     excerpt=item.get("spec_excerpt"),
                 ))
             elif verdict == "waived":
@@ -140,6 +171,8 @@ def run_scopeguard(ctx: GateContext, manifest: GateManifest, check: str, res: Ch
             message = str(f.get("message")).replace(
                 "(install the scopeguard preset, or add the table shown below)",
                 "(add it from the scope contract printed by step A; archiGuard's plan template carries the section)")
+            if f.get("repairable") is False and f.get("level") == "violation":
+                res.repairable = False
             res.add(Finding(rule=str(f.get("item") or "scope"), message=message,
                             severity=BLOCKING if f.get("level") == "violation" else ADVISORY,
                             where=f.get("location")))

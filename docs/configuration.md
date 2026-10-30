@@ -54,7 +54,7 @@ built-in defaults  <-  archiguard-config.yml  <-  local-config.yml and ARCHIGUAR
 | `tests.timeout` | `1800` | seconds per command |
 | `git.base` | `main` | A4.6 reads commits and changed test files since this branch |
 | `edit_guard.enabled` | `true` | the A4.2 hook |
-| `edit_guard.always_readonly` | standards, `.specify/archiguard/**`, `.specify/extensions/archiguard/**`, `specs/*/gates/**/*.json` | never editable by an agent |
+| `edit_guard.always_readonly` | standards, `.specify/archiguard/**`, `.specify/extensions/archiguard/**`, `specs/*/gates/**/*.json`, `specs/*/scopeguard-stamp.json` | never editable by an agent |
 | `edit_guard.after_handover` | `spec.md`, `ba/**`, `handover.yml` | read-only once the feature has a handover record |
 | `edit_guard.after_signoff` | `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, `contracts/**`, `gates/signoff.json` | read-only once the design is signed |
 | `edit_guard.human_only` | `signoff`, `reopen`, `resolve`, `ledger add`, `ledger revoke` | archiGuard subcommands an agent may not run from its shell tool |
@@ -90,7 +90,7 @@ The default pipeline:
 
 | Command | Step A | Step B |
 |---------|--------|--------|
-| `speckit.plan` | A0 [A0.1 A0.2 A0.3] no repair · A3 [A3.1] · scope [inventory] | scope [plan] · A0 [A0.5] · A0 [A0.4] report · A3 [A3.3 A3.7] |
+| `speckit.plan` | A0 [A0.1 A0.2 A0.3] no repair · A3 [A3.1] · scope [stamp inventory] | scope [plan] · A0 [A0.5] · A0 [A0.4] report · A3 [A3.3 A3.7] |
 | `speckit.tasks` | – | scope [tasks] · A3 [A3.5] |
 | `speckit.implement` | A4 [A4.1] no repair | scope [implement] · A4 [A4.4 A4.6] |
 
@@ -105,7 +105,7 @@ by the edit guard, and A4.3 natively by `/speckit.implement`.
 gates:
   scope:                                    # archiGuard's registration of the scopeGuard engine (default)
     extension: scopeguard                   # installed Spec Kit extension that provides the gate
-    version: ">=0.3.0,<0.5"                 # archiGuard refuses another version (exit 2)
+    version: ">=0.3.0,<0.6"                 # archiGuard refuses another version (exit 2); 0.5 adds the scope stamp
     command: scripts/python/scopeguard.py   # relative to .specify/extensions/<extension>/
     sha256: null                            # optional pin of that file (sha256 with LF line endings, quoted hex)
     config: .specify/extensions/archiguard/scope-config.yml

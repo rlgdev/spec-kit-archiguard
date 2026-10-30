@@ -19,3 +19,11 @@ plan:
   require_reference_for_covered: true   # a 'covered' row must say where the plan handles the item
 
 unknown_ids: violation                  # IDs in plan / tasks that spec.md does not define
+
+# scopeGuard 0.5+: the scope stamp. Step A of /speckit.plan stamps the IDs and the hash of spec.md
+# (specs/<feature>/scopeguard-stamp.json); a stamped ID removed from spec.md, or one added after the stamp,
+# stops the step for a person (archiGuard escalates: no agent repairs it). The edit guard keeps the agent
+# away from the stamp file. Keys: enabled (true), added_ids (violation | warning).
+# stamp:
+#   enabled: true
+#   added_ids: violation
