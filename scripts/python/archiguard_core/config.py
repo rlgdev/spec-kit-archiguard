@@ -22,6 +22,7 @@ STEPS = ("a", "b")
 MODES = ("enforce", "report")
 INTEGRATIONS = ("inline", "hooks")
 DEFAULT_CEILING = 6
+FEEDBACK_KINDS = ("unmapped-code", "cross-context", "new-unit", "topology", "vocabulary", "domain-change", "map-gap")
 
 DEFAULT_PIPELINE: Dict[str, Any] = {
     "speckit.plan": {
@@ -103,6 +104,20 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     },
     "fitness": {"provider": "graph-free"},
     "signoff": {"require": ["speckit.plan", "speckit.tasks", "A3.6"]},
+    # loop feedback to the domain master design: evidence after coding, never a gate (docs/loop-feedback.md)
+    "feedback": {
+        "enabled": True,
+        "kinds": list(FEEDBACK_KINDS),
+        "code": "auto",                         # globs of code files; auto = the source extensions of the code analysis
+        "ignore": ["specs/**", ".specify/**", "audit/**", "docs/**", ".github/**"],
+        "unit_markers": ["pom.xml", "build.gradle", "build.gradle.kts", "package.json", "go.mod", "*.csproj",
+                         "pyproject.toml", "setup.py", "Cargo.toml", "Dockerfile", "Chart.yaml"],
+        "group_depth": "auto",                  # directory depth of an unmapped-code item; auto = the map's code globs
+        "repository": "auto",                   # this repository's name in deployables; auto = the origin remote
+        "domain_rules": "auto",                 # auto = the rules with a context_boundaries check
+        "max_items": 50,
+        "print_items": 3,
+    },
     "options": {},
     "pipeline": copy.deepcopy(DEFAULT_PIPELINE),
     "loops": {"handover_validator": 3, "implement_converge": 3, "handover_entry": 3, "test_loop": 3},
@@ -398,7 +413,7 @@ def validate(cfg: Config, validate_gates: bool = True) -> None:
             f"config: unknown setting(s) {', '.join(unknown)} - see config-template.yml for the settings archiGuard reads"
         )
     for section in ("defaults", "standards", "domain", "ledger", "feature", "tests", "git", "edit_guard", "fitness",
-                    "signoff"):
+                    "signoff", "feedback"):
         value = d.get(section)
         if not isinstance(value, dict):
             raise ArchiGuardError(f"config: {section} must be a mapping")
@@ -511,6 +526,8 @@ def validate(cfg: Config, validate_gates: bool = True) -> None:
     sign["require"] = _str_list(sign.get("require"), "signoff.require")
     d["signoff"] = sign
 
+    _validate_feedback(d["feedback"])
+
     options = d.get("options") or {}
     if not isinstance(options, dict):
         raise ArchiGuardError("config: options must be a mapping of check id to settings")
@@ -530,6 +547,32 @@ def validate(cfg: Config, validate_gates: bool = True) -> None:
         from .gates import registry  # late import: the registry reads gate manifests
 
         registry.validate_pipeline(cfg)
+
+
+def _validate_feedback(fb: Dict[str, Any]) -> None:
+    if not isinstance(fb.get("enabled"), bool):
+        raise ArchiGuardError("config: feedback.enabled must be true or false")
+    kinds = _str_list(fb.get("kinds"), "feedback.kinds")
+    unknown = sorted(set(kinds) - set(FEEDBACK_KINDS))
+    if unknown:
+        raise ArchiGuardError(f"config: feedback.kinds: unknown kind(s) {', '.join(unknown)} "
+                              f"(kinds: {', '.join(FEEDBACK_KINDS)})")
+    fb["kinds"] = kinds
+    for key in ("code", "domain_rules"):
+        if fb.get(key) != "auto":
+            fb[key] = _str_list(fb.get(key), f"feedback.{key}")
+    for key in ("ignore", "unit_markers"):
+        fb[key] = _str_list(fb.get(key), f"feedback.{key}")
+    depth = fb.get("group_depth")
+    if depth != "auto" and (isinstance(depth, bool) or not isinstance(depth, int) or depth < 1):
+        raise ArchiGuardError(f"config: feedback.group_depth must be 'auto' or a whole number >= 1, got {depth!r}")
+    repo = fb.get("repository")
+    if not isinstance(repo, str) or not repo.strip():
+        raise ArchiGuardError("config: feedback.repository must be 'auto' or the repository's name")
+    for key, low in (("max_items", 1), ("print_items", 0)):
+        value = fb.get(key)
+        if isinstance(value, bool) or not isinstance(value, int) or value < low:
+            raise ArchiGuardError(f"config: feedback.{key} must be a whole number >= {low}, got {value!r}")
 
 
 def _entry(entry: Any, where: str, global_mode: str) -> Dict[str, Any]:

@@ -24,3 +24,6 @@ directory as `<FEATURE_DIR>/gates/architecture-compliance.md` (the evidence for 
 1. Run `{SCRIPT}` from the repository root (append `--feature-dir <dir>` if the user input names one).
 2. Show the report's overall status, the failing checks and the waivers with their expiry, and give the path of the
    saved report. Do not edit the report or the verdict files.
+3. The report ends with `Loop feedback to the domain master design (not blocking)`: the topology answer (did the
+   feature extend an existing unit or create a new one) and the items for the lead architect. Show the answer and the
+   number of items by impact. It never affects the overall status; do not act on it.

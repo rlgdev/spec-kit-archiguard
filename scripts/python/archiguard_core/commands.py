@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 from xml.sax.saxutils import escape as xml_escape
 
-from . import __version__, standards
+from . import __version__, feedback, standards
 from .common import (
     ENGINE_ROOT,
     EXIT_ERROR,
@@ -337,6 +337,11 @@ def cmd_handover(root: Path, cfg: Config, feature_dir: Path, as_json: bool, verb
     code = results_exit(results)
     manifest = build_manifest(ctx, results)
     manifest["status"] = {EXIT_PASS: "pass", EXIT_FAIL: "violation", EXIT_ESCALATE: "escalated", EXIT_ERROR: "error"}[code]
+    # the loop feedback on the code that enters testing (evidence; the entry checks and the status are unchanged)
+    fb = feedback.produce(root, cfg, feature_dir, "handover-4-5", ctx=ctx)
+    entry = feedback.manifest_entry(fb, feature_dir, root)
+    if entry is not None:
+        manifest["feedback"] = entry
     path = feature_dir / GATES_DIRNAME / "handover-4-5.json"
     write_json(path, manifest)
     if as_json:
@@ -346,6 +351,8 @@ def cmd_handover(root: Path, cfg: Config, feature_dir: Path, as_json: bool, verb
         print(f"\nRESULT: {manifest['status'].upper()} | manifest: {rel_path(path, root)}")
         if code == EXIT_FAIL:
             print("NEXT: back to implement - fix the entry checks above (this is not a test-loop iteration).")
+        if fb is not None:
+            print("\n" + feedback.render_block(fb, ctx.feature, print_items=int(cfg["feedback"]["print_items"])))
     return code
 
 
@@ -542,15 +549,32 @@ def build_report(root: Path, cfg: Config, feature_dir: Path) -> Tuple[str, Dict[
                       f"{s.get('traced', 0)}/{s.get('in_scope', 0)} in-scope id(s) traced."]
         except ValueError:
             pass
+    lines += ["", "## Loop feedback to the domain master design (not blocking)", ""]
+    if not cfg["feedback"]["enabled"]:
+        lines.append("Loop feedback is switched off (feedback.enabled).")
+        fb = None
+    else:
+        fb = feedback.load(feature_dir)
+        if fb is not None and fb.get("status") != "not-evaluated":
+            lines.append(f"Computed {feedback.COMPUTED_BY.get(str(fb.get('computed_by')), fb.get('computed_by'))} at commit "
+                         f"{(fb.get('commit') or '-')[:12]}; details in {rel_path(feedback.md_path(feature_dir), root)}. "
+                         "For the lead architect: it never affects the overall status.")
+            lines.append("")
+        lines += feedback.section_lines(fb, heading="##")
     statuses = [r["status"] for r in rows]
     overall = "error" if "error" in statuses else ("violation" if "violation" in statuses else ("waived" if "waived" in statuses else ("pass" if statuses else "no evidence")))
     lines[5:5] = [f"**Overall: {overall}**", ""]
     data = {"feature": ctx.feature, "commit": commit, "pins": pins, "overall": overall, "verdicts": rows,
-            "signoff": so, "waivers": [w for _, w in waived]}
+            "signoff": so, "waivers": [w for _, w in waived],
+            "loop_feedback": ({"status": fb.get("status"), "answer": (fb.get("topology") or {}).get("answer"),
+                               "summary": fb.get("summary"), "file": rel_path(feedback.json_path(feature_dir), root)}
+                              if fb else None)}
     return "\n".join(lines) + "\n", data
 
 
 def cmd_report(root: Path, cfg: Config, feature_dir: Path, save: bool, as_json: bool, out: Optional[str]) -> int:
+    if save:   # the final feedback: recomputed on the commit the report is made for (never changes the overall status)
+        feedback.produce(root, cfg, feature_dir, "report")
     md, data = build_report(root, cfg, feature_dir)
     if save:
         write_text(feature_dir / GATES_DIRNAME / "architecture-compliance.md", md)
@@ -561,12 +585,35 @@ def cmd_report(root: Path, cfg: Config, feature_dir: Path, save: bool, as_json: 
 
 
 # --------------------------------------------------------------------------- #
+# loop feedback                                                                 #
+# --------------------------------------------------------------------------- #
+
+
+def cmd_feedback(root: Path, cfg: Config, feature_dir: Path, save: bool, as_json: bool) -> int:
+    """Compute (and with --save write) the loop feedback to the domain master design. Always exits 0 (D1)."""
+    if not cfg["feedback"]["enabled"]:
+        print(json.dumps({"tool": "archiguard", "kind": "loop-feedback", "status": "off"}) if as_json
+              else "archiGuard: loop feedback is switched off (feedback.enabled).")
+        return EXIT_PASS
+    data = feedback.produce(root, cfg, feature_dir, "cli", write=save)
+    if as_json:
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+        return EXIT_PASS
+    print(f"archiGuard {__version__} | loop feedback | feature: {rel_path(feature_dir, root)}")
+    print("")
+    print(feedback.render_block(data, rel_path(feature_dir, root), print_items=10 ** 6, saved=save))
+    if not save:
+        print("\n(not saved - add --save to write gates/loop-feedback.json and .md)")
+    return EXIT_PASS
+
+
+# --------------------------------------------------------------------------- #
 # CI                                                                            #
 # --------------------------------------------------------------------------- #
 
 
 def cmd_ci(root: Path, cfg: Config, feature: Optional[Path], all_features: bool, implement: bool,
-           as_json: bool, junit: Optional[str], out: Optional[str]) -> int:
+           as_json: bool, junit: Optional[str], out: Optional[str], with_feedback: bool = False) -> int:
     report: Dict[str, Any] = {"tool": "archiguard", "version": __version__, "checks": [], "features": []}
     codes: List[int] = []
     lines = [f"archiGuard {__version__} | CI | {root.name}"]
@@ -624,6 +671,13 @@ def cmd_ci(root: Path, cfg: Config, feature: Optional[Path], all_features: bool,
             entry["commands"][command] = {"status": outcome.status, "combined": outcome.combined}
             lines.append("")
             lines.append(render_text(outcome, root))
+        if with_feedback and cfg["feedback"]["enabled"]:
+            # printed for the final commit, never written and never part of the exit code (D1)
+            fb = feedback.produce(root, cfg, fd, "ci", write=False, ctx=GateContext(root, cfg, fd, ci=True))
+            entry["feedback"] = fb
+            lines.append("")
+            lines.append(feedback.render_block(fb, rel_path(fd, root), print_items=int(cfg["feedback"]["print_items"]),
+                                               saved=False))
         report["features"].append(entry)
     code = worst(*codes) if codes else EXIT_PASS
     if code == EXIT_ESCALATE:

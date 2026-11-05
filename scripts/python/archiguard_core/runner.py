@@ -114,7 +114,8 @@ def _escalation_path(feature_dir: Path, command: str, step: str) -> Path:
 class StepOutcome:
     def __init__(self, command: str, step: str, status: str, exit_code: int, combined: Dict[str, Any],
                  results: List[CheckResult], escalation: Optional[Path] = None, reason: Optional[str] = None,
-                 skipped: Optional[str] = None):
+                 skipped: Optional[str] = None, feedback: Optional[Dict[str, Any]] = None,
+                 feedback_print_items: int = 3):
         self.command = command
         self.step = step
         self.status = status
@@ -124,6 +125,8 @@ class StepOutcome:
         self.escalation = escalation
         self.reason = reason
         self.skipped = skipped
+        self.feedback = feedback          # loop feedback (evidence, never part of the verdict)
+        self.feedback_print_items = feedback_print_items
 
 
 # --------------------------------------------------------------------------- #
@@ -269,8 +272,15 @@ def run_step(root: Path, cfg: Config, command: str, step: str, feature_dir: Path
         write_text(escalation, render_escalation(ctx, combined, groups, reason or ""))
     elif escalation.exists() and status == STATUS_PASS:
         escalation.unlink()
+    feedback_data = None
+    if command == "speckit.implement" and status in (STATUS_PASS, STATUS_ESCALATED):
+        # the end of coding: the loop feedback to the domain master design (evidence, never a gate - D1)
+        from .feedback import produce
+
+        feedback_data = produce(root, cfg, feature_dir, "implement-b", ctx=ctx)
     return StepOutcome(command, step, status, code, combined, results,
-                       escalation if status == STATUS_ESCALATED else None, reason)
+                       escalation if status == STATUS_ESCALATED else None, reason, feedback=feedback_data,
+                       feedback_print_items=int(cfg["feedback"]["print_items"]))
 
 
 def verify(root: Path, cfg: Config, command: str, feature_dir: Path, *, ci: bool = False) -> StepOutcome:
@@ -387,6 +397,11 @@ def render_text(outcome: StepOutcome, root: Path, verbose: bool = False) -> str:
         out.append("NEXT: stop. Show the messages above to the user; the step cannot be evaluated until the setup is fixed.")
     elif outcome.step == "b":
         out.append(f"archiGuard: PASS after {c.get('iteration') or 0} repair iteration(s).")
+    if outcome.feedback is not None:
+        from .feedback import render_block
+
+        out.append("")
+        out.append(render_block(outcome.feedback, c.get("feature"), print_items=outcome.feedback_print_items))
     return "\n".join(out)
 
 

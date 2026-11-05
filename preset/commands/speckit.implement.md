@@ -47,7 +47,11 @@ Exit codes: **0** pass, **1** resolve, **3** escalate, **2** cannot evaluate.
 
    Keep the exit code and the full output.
 2. **Exit 0: pass.** Add one line to your Completion Report, for example `archiGuard: PASS after N repair iteration(s)`,
-   plus the advisory findings and waivers as printed. Continue with the Mandatory Post-Execution Hooks and the Completion Report.
+   plus the advisory findings and waivers as printed. When the output ends with a `FEEDBACK` block (the loop feedback to
+   the domain master design), add a `Loop feedback (not blocking)` section to the Completion Report with its first line,
+   its `topology:` line and its last line (`details:` or `... more:`) as printed. **Do not act on the feedback in this
+   command**: its items are for the domain master design and the next iteration, never findings to resolve here.
+   Continue with the Mandatory Post-Execution Hooks and the Completion Report.
 3. **Exit 1: resolve.** The output lists every open item under `RESOLVE`, with where it is, the fix hint and the rule
    or specification text to work from. Resolve **all** of them, then go back to step 1.
    - **Fitness** (A4.4): fix the code that breaks a rule (layering, context boundaries, contracts, forbidden
@@ -60,9 +64,12 @@ Exit codes: **0** pass, **1** resolve, **3** escalate, **2** cannot evaluate.
    - Never mark a rule `not applicable` or `deviation`, and never defer a scope item, just to make the gate pass: `not applicable` needs a reason from the allowed list, `deviation` needs an approved, unexpired ADR in the decision ledger, a deferral is a scope change: it needs a reason the user approved (and, when the project requires it, the RFI or decision-ledger entry that approved it).
    - If an item can only be resolved with information or a decision that only a person can give (a specification change, a rule exception, a domain change), leave it open. The runner escalates with a problem report instead of you guessing.
    - Keep a short note of what you changed for each item in each iteration; you need it if the gate escalates.
+   - Never edit `<FEATURE_DIR>/gates/loop-feedback.json` or `<FEATURE_DIR>/gates/loop-feedback.md`, and never act on the `FEEDBACK` items: they are
+     evidence for the domain master design and the next iteration, not findings of this command.
 4. **Exit 3: escalate.** Stop resolving. Open the escalation note named in the output
    (`<FEATURE_DIR>/gates/escalation-implement-b.md`) and replace every `TODO(agent)` with what you attempted
    for that item in each iteration, the blocker, and the decision needed (fix the artefact, an RFI to the BA, or a
    waiver in the decision ledger). Report `archiGuard: ESCALATED - <n> item(s) could not be resolved` with each item and
-   the note's path. **The command ends here**: do not run the post-execution hooks and do not write the Completion Report.
+   the note's path, and, when the output ends with a `FEEDBACK` block, its first line and its `topology:` line as printed.
+   **The command ends here**: do not run the post-execution hooks and do not write the Completion Report.
 5. **Exit 2: cannot evaluate.** Show the message and end the command here (fail-closed, no repair).

@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "archiguard-sdd"
   name: "Design and implement under archiGuard gates"
-  version: "0.1.1"
+  version: "0.2.0"
   author: "rlgdev"
   description: "plan -> tasks -> analyze (A3.6) -> design authority sign-off -> implement <-> converge -> handover 4->5 -> deterministic test loop -> compliance report -> PR approval. Starts after the formal handover from the BA specification tool to Spec Kit; requires the archiguard extension."
 
@@ -197,7 +197,7 @@ steps:
 
   - id: pr-approval
     type: gate
-    message: "Tech lead: approve the pull request on the evidence ({{ inputs.feature }}/gates/architecture-compliance.md, test-loop.json). QA lead: sign the test exit."
+    message: "Tech lead: approve the pull request on the evidence ({{ inputs.feature }}/gates/architecture-compliance.md, test-loop.json). QA lead: sign the test exit. The loop feedback ({{ inputs.feature }}/gates/loop-feedback.md) goes to the lead architect; it does not block this approval."
     options: [approve, reject]
     on_reject: abort
     verdict_input: pr_verdict

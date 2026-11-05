@@ -138,6 +138,21 @@ relations:
   - { from: orders, to: payments, type: customer-supplier, via: [api:payments/payments.yaml] }
 ```
 
+Two optional keys describe the deployment topology. **Only the [loop feedback](loop-feedback.md) reads them**; no gate
+does, so adding them never changes an A0, A3 or A4 result:
+
+```yaml
+contexts:
+  orders:
+    deployable: shop                          # one name or a list: the unit(s) the context is deployed in
+deployables:                                  # where each unit lives; repo defaults to this repository, root to "."
+  shop:          { repo: acme-shop,          root: ".", kind: service }
+  notifications: { repo: acme-notifications, root: ".", kind: service }   # service | library | job | frontend | other
+```
+
+With them, the feedback tells whether a feature extended an existing unit or created a new one, and whether the
+code landed where the domain master design deploys its context.
+
 `from` is the consumer. The BA specification tool ingests the data model (a sub-product of the domain model), builds the
 Data artefacts (D) and the context map (MAP) from it, and the formal handover stamps the domain map
 version into the feature's `handover.yml`. A0.1 checks that version against the repository's pin

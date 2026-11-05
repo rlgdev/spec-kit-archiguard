@@ -21,6 +21,11 @@ standards a project must obey are set in one config file.
 | **H handover 4 → 5** | the code may enter the deterministic test loop | after implement |
 | **scope** (plug-in) | no requirement is dropped, on the [scopeGuard](https://github.com/rlgdev/spec-kit-scopeguard) engine | plan, tasks, implement |
 
+After coding, archiGuard also writes the **loop feedback** to the domain master design: what the feature did that
+the domain map does not describe (code no context maps, a new build unit, an undeclared deployment topology, a
+dependency that only passes under a waiver, ...), each item with a short suggestion for the next iteration. It is
+evidence for the lead architect, never a gate ([below](#loop-feedback-to-the-domain-master-design)).
+
 Every gate is deterministic: plain parsing, set arithmetic, import graphs and regular expressions,
 with no LLM in the loop. The agent repairs; the script decides.
 
@@ -85,11 +90,11 @@ From your Spec Kit project root:
 
 ```bash
 # 1. the extension: the gate runner, the checkers, the commands, hooks and the edit guard, the config files
-specify extension add archiguard --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.1.1/archiguard.zip
+specify extension add archiguard --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.2.0/archiguard.zip
 
 # 2. the preset: makes the gates steps of /speckit.plan, /speckit.tasks and /speckit.implement,
 #    saves the /speckit.analyze report, and adds the archiGuard sections to the plan and tasks templates
-specify preset add --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.1.1/archiguard-preset.zip
+specify preset add --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.2.0/archiguard-preset.zip
 
 # 3. the scope gate's engine (do NOT add the scopeguard-templates preset: archiGuard wraps the commands).
 #    With scopeGuard 0.4+, set 'integration: embedded' in .specify/extensions/scopeguard/scopeguard-config.yml
@@ -132,7 +137,7 @@ before adding the new preset, and run `configure` again. Your `archiguard-config
   skills/<skill>/rules.yml      ARCH-### rules as data: level must|should, checks with target + kind
   profiles/<name>.yml           a named rule set per stack, owned centrally
   packs/<name>.yml              rules a domain-map context pulls in
-  domain-map.yaml               the domain master design (contexts, relations, code mapping)
+  domain-map.yaml               the domain master design (contexts, relations, code mapping, optional deployables)
 .specify/archiguard/
   standards.lock.yml            written by 'archiguard resolve' - commit it
   ledger.jsonl                  the decision ledger (ADRs and waivers), hash-chained
@@ -169,7 +174,7 @@ code has two planted violations.
 
 ```text
 $ archiguard run plan b
-archiGuard 0.1.1 | speckit.plan · step B | feature: specs/001-place-order | iteration 0 (budget 3)
+archiGuard 0.2.0 | speckit.plan · step B | feature: specs/001-place-order | iteration 0 (budget 3)
   [PASS] A0 · A0.5 relations in the plan
   [PASS] A0 · A0.4 vocabulary                   1 finding(s), report mode
   [FAIL] A3 · A3.3 check-plan                   1 blocking
@@ -235,6 +240,35 @@ the test (`@Tag("AC-002")`, an attribute, or a `// BR-042` comment). Workflow lo
 feature's `gates/.state/`, the first red run past `loops.<name>` exits `3` with an escalation note, and a
 green run resets it.
 
+## Loop feedback to the domain master design
+
+The gates check that a feature fits the domain map; the loop feedback reports what the map *missed*, so the next
+map version learns from the implementation. At the end of `/speckit.implement` step B (and again at the handover
+4 → 5 and with `report --save`), archiGuard compares the files changed on the branch with the domain map and writes
+`gates/loop-feedback.json` and `.md`:
+
+```text
+FEEDBACK for the domain master design (not blocking, for the next iteration): 7 item(s) - 3 high, 2 medium, 2 low
+  topology: mixed - existing unit '.' (orders, payments) + NEW unit 'services/notifications' (no context)
+  [high]   LF-ef1129cf unmapped-code  services/notifications - Map services/notifications/** to a context in the next domain map version (…
+  [high]   LF-2a2a5a3d new-unit       acme-shop:services/notifications - Decide in the domain master design whether services/notifications is a new …
+  [high]   LF-42456a00 domain-change  waiver:WVR-0001 - Waived by WVR-0001 until 2026-12-31: refactor the code to meet ARCH-301, or change the domain map …
+  ... 4 more: specs/001-place-order/gates/loop-feedback.md
+```
+
+- **Seven kinds:** `unmapped-code`, `cross-context`, `new-unit`, `topology`, `vocabulary`, `domain-change`, `map-gap`;
+  each item names who it is for and where the fix belongs.
+- **Topology:** the answer to "did this feature extend an existing unit or create a new one (a new service?)". The
+  optional `deployable` / `deployables:` keys of the domain map let it check the code landed where the DMD deploys
+  its context.
+- **Never a gate:** no exit code, verdict, iteration count or escalation changes; the agent reports the summary in the
+  Completion Report and does not act on it.
+- **Handed over** through the compliance report (the final feedback, at PR approval) and auditGuard, which records
+  each item, lets a person accept, reject or defer it, and exports the accepted ones as backlog candidates.
+
+[docs/loop-feedback.md](docs/loop-feedback.md) describes the kinds, the files and the lifecycle;
+[docs/loop-feedback-specification.md](docs/loop-feedback-specification.md) is the specification.
+
 ## Commands
 
 | Command | What it does |
@@ -243,12 +277,13 @@ green run resets it.
 | `/speckit.archiguard.rules` | the rules that apply to the feature and the contract the plan must meet |
 | `/speckit.archiguard.handover` | handover 4 → 5 |
 | `/speckit.archiguard.report` | the architecture compliance report (`gates/architecture-compliance.md`) |
+| `/speckit.archiguard.feedback` | the loop feedback to the domain master design (`gates/loop-feedback.md`; never a gate) |
 | `/speckit.archiguard.planentry` … `implementgate` | steps A and B as hook commands (`integration: hooks`) |
 | `/speckit.archiguard.editguard` | the A4.2 hook (agent event, not for direct use) |
 
 The command line (`bash .specify/extensions/archiguard/scripts/bash/archiguard.sh <command>`, or the
 `.ps1` / `.py` launchers) adds `run`, `verify`, `check`, `resolve`, `validate-standards`, `signoff`,
-`reopen`, `test`, `loop`, `ledger`, `ci`, `scaffold` and `version`. Every command takes
+`reopen`, `test`, `loop`, `feedback`, `ledger`, `ci`, `scaffold` and `version`. Every command takes
 `--feature-dir`, `--json` and `--verbose`; `archiguard <command> --help` lists the rest.
 
 ## Configuration
@@ -279,6 +314,7 @@ pipeline:                    # the gates plugged into each command, in order
 loops: { handover_validator: 3, implement_converge: 3, handover_entry: 3, test_loop: 3 }
 gates:                       # registered plug-in gates (archiGuard's own need no registration)
   scope: { extension: scopeguard, version: ">=0.3.0,<0.5", command: scripts/python/scopeguard.py }
+feedback: { enabled: true }  # the loop feedback to the domain master design (evidence, never a gate)
 ```
 
 - **Budgets.** A project may lower budgets, never exceed the ceiling the service team ships in
@@ -338,7 +374,7 @@ and verifies the ledger. It never loops and never writes evidence.
 python .specify/extensions/archiguard/scripts/python/archiguard.py ci --junit reports/archiguard.xml
 ```
 
-[docs/ci.md](docs/ci.md) has a GitHub Actions job (or `uses: rlgdev/spec-kit-archiguard@v0.1.1`) and a
+[docs/ci.md](docs/ci.md) has a GitHub Actions job (or `uses: rlgdev/spec-kit-archiguard@v0.2.0`) and a
 Bitbucket Pipelines step.
 
 ## What archiGuard does and does not prove

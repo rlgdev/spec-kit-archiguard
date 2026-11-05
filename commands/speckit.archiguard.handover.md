@@ -27,7 +27,9 @@ after the sign-off (needs a person), **2** cannot evaluate.
 ## Procedure
 
 1. Run `{SCRIPT}` from the repository root (append `--feature-dir <dir>` if the user input names one).
-2. **Exit 0.** Report `archiGuard: handover 4->5 ready` and the manifest path.
+2. **Exit 0.** Report `archiGuard: handover 4->5 ready` and the manifest path. When the output ends with a `FEEDBACK`
+   block (the loop feedback to the domain master design, refreshed on the code that enters testing), report its first
+   line and its `topology:` line as printed. It never blocks the handover; do not act on it.
 3. **Exit 1.** Go back to implement and fix the listed entry checks: finish open tasks and the Convergence phase,
    repair the fitness findings, write the missing tests tagged with their ids, make the build green. Then run this
    command again.

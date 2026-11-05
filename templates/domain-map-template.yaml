@@ -26,6 +26,7 @@ contexts:
     modules: [com.acme.orders]                            # import prefixes of the context
     published: [com.acme.orders.api]                      # what other contexts may import
     packs: []                                             # rulebook packs this context pulls in
+    deployable: shop                                      # optional: the unit(s) the context is deployed in (loop feedback)
 
   payments:
     domain: finance
@@ -37,9 +38,17 @@ contexts:
     modules: [com.acme.payments]
     published: [com.acme.payments.api]
     packs: []                                             # e.g. [payments-pci] once packs/payments-pci.yml exists in the rulebook
+    deployable: shop
 
 # from = the consumer (downstream), to = the provider (upstream).
 # types: customer-supplier, conformist, anticorruption-layer, open-host-service,
 #        published-language, shared-kernel, partnership (both ways), separate-ways (no dependency)
 relations:
   - { from: orders, to: payments, type: customer-supplier, via: [api:payments/payments.yaml] }
+
+# Optional (read by the loop feedback only; no gate reads it): where each deployable lives, so the feedback can tell
+# whether a feature extended an existing unit or created a new one (a new service?). repo defaults to the repository
+# the feedback runs in, root to "." (the repository root); kind: service | library | job | frontend | other.
+deployables:
+  shop: { repo: acme-shop, root: ".", kind: service }      # a modular monolith: one unit, two contexts
+  # notifications: { repo: acme-notifications, root: ".", kind: service }   # a context deployed from another repository

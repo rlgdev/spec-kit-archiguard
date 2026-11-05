@@ -1,7 +1,7 @@
-# Loop feedback to the domain master design — Specification v1.0 (draft, ready to implement)
+# Loop feedback to the domain master design — Specification v1.0
 
-> **Status:** draft for archiGuard 0.2.0, auditGuard 0.3.0 and Guardians 0.2.0. Nothing here is implemented yet.
-> Section 10 lists the points to confirm before the implementation starts; each has a proposed default.
+> **Status:** implemented in archiGuard 0.2.0, auditGuard 0.3.0 and Guardians 0.2.0, with the proposed defaults of
+> section 10. Where the body below differs, the amendment wins. User documentation: [loop-feedback.md](loop-feedback.md).
 
 | | |
 |---|---|
@@ -10,6 +10,22 @@
 | Host | GitHub Spec Kit ≥ 1.0.1 · Python ≥ 3.9, standard library only · git |
 | Principle | **Evidence, not a gate.** The feedback never blocks, never changes an exit code, a verdict, an iteration count or an escalation |
 | Traceability | User stories `US1–US7`, functional requirements `FR-###`, non-functional `NFR-###`, success criteria `SC-###` |
+
+## Amendments in the implementation
+
+| # | Requirement | Amendment | Why |
+|---|-------------|-----------|-----|
+| A1 | FR-106, D3 | `domain-change` has a fourth source: (d) every waiver of a domain rule that the fitness runner applied for this feature (`gates/A4/A4.4.json` → `waived`) and that no other item carries raises `waiver:<id>` (impact high, with its expiry). For this the feedback also reads the feature's A4.4 verdict. | A waived import in a file the branch did not change is invisible to source (a), but the feature still relies on the waiver. This is debt with a date. |
+| A2 | FR-133, Appendix A | Items sort by impact, then by kind in the order of §3.2, so `unmapped-code` comes before `new-unit`. Appendix A shows the order and the items the implementation actually gives: ARCH-301's waiver is `waiver:WVR-0001`, and the data model of `examples/orders` has `Shipment` (`LF-831ba84c`), not `Checkout`. | The draft appendix was written before the code. |
+| A3 | FR-134 | `resolved[]` accumulates. An id an earlier run of the feature raised stays listed (with `resolved_at` and `resolved_by`) until it is raised again, up to 50 entries. | With write-if-changed (FR-135), a list of only the last run's resolutions would rewrite the file once more for nothing. |
+| A4 | FR-204 | `report` without `--save` states when and at which commit the feedback was computed. It does not compare that commit with HEAD. | Write-if-changed keeps the commit of the last content change, so a HEAD comparison would flag every later commit. |
+| A5 | FR-205, §7.1 | Added the agent command `/speckit.archiguard.feedback`. `archiguard feedback` prints every item, not only `print_items`. Not implemented (P2): FR-206's `$GITHUB_STEP_SUMMARY`, FR-209 `--note` and FR-210 `--all`. | — |
+| A6 | FR-103, FR-104 | No `new-unit` item is raised when *any* deployable of the map declares the unit root, not only one of the home context. Topology (c) also covers a declared new unit that holds home-context code but is not one of the home context's deployables. | The DMD already knows the unit; what remains is whether the home context belongs in it. |
+| A7 | FR-202, §5.3 | The agent copies the block's first line, its `topology:` line and its last line (`details:` or `... more:`). In the block, each suggestion is cut to fit 200 characters. | A short, stable Completion Report; the file holds the full text. |
+| A8 | FR-105 | The A0.4 term logic moved into `gates/a0.unknown_terms`, which A0.4 and the feedback share. The A0.4 results are unchanged. | One definition of a term outside the glossary. |
+| A9 | FR-402, §5.4 (auditGuard) | Feedback events refer to the snapshot of `loop-feedback.json` through `file_fingerprint`, carried by the `report.saved` event of that file version. `occurrences` is stored as a count. | One snapshot per file version, not one per item. |
+| A10 | FR-504, FR-505 (auditGuard) | The loop-feedback sections of `trail.md`, `sprint.md` and the feature pages appear once any feedback is recorded. Also added: the agent command `/speckit.auditguard.backlog`, `feedback_recorded` in `configure --json`, and a `feedback` filter and the pending triage in the viewer. `--ref` is refused on any subject other than `feedback:`. | Projects without archiGuard 0.2 see unchanged views. |
+| A11 | §8.1 (auditGuard example) | `tools/make-example.py` sets `ARCHIGUARD_TODAY` to the story's clock. For that, `archiguard ledger add` now takes `created` from the same date source as the expiry checks. The example's triage accepts `LF-2ba4e67d` (with `--ref ARCH-77`), defers `LF-831ba84c`, and ships `audit/backlog-S-2026-22.csv`. | A deterministic example: the waiver in the story would otherwise expire on the real clock. |
 
 ---
 
@@ -522,9 +538,9 @@ The compliance report section uses the same topology sentence and the item table
 ```text
 FEEDBACK for the domain master design (not blocking, for the next iteration): 7 item(s) - 3 high, 2 medium, 2 low
   topology: mixed - existing unit '.' (orders, payments) + NEW unit 'services/notifications' (no context)
-  [high]   LF-2a2a5a3d new-unit       acme-shop:services/notifications - declare it as a deployable, or move its code into the existing unit '.'
-  [high]   LF-ef1129cf unmapped-code  services/notifications (2 files) - map services/notifications/** to a context, or declare a new context
-  [high]   LF-4fef6b49 domain-change  published:payments:com.acme.payments.internal - waived by WVR-0001 until 2026-12-31: publish it in payments, or use com.acme.payments.api before then
+  [high]   LF-ef1129cf unmapped-code  services/notifications - Map services/notifications/** to a context in the next domain map version (…
+  [high]   LF-2a2a5a3d new-unit       acme-shop:services/notifications - Decide in the domain master design whether services/notifications is a new …
+  [high]   LF-42456a00 domain-change  waiver:WVR-0001 - Waived by WVR-0001 until 2026-12-31: refactor the code to meet ARCH-301, or change the domain map …
   ... 4 more: specs/001-place-order/gates/loop-feedback.md
 ```
 
@@ -770,7 +786,7 @@ auditguard backlog [--sprint S | --all] [--status new,deferred,accepted,in-backl
 
 ---
 
-## 10. Points to confirm (proposed defaults)
+## 10. Points to confirm (proposed defaults; all implemented as proposed)
 
 | # | Question | Proposed |
 |---|----------|----------|
@@ -791,27 +807,27 @@ repository `acme-shop`, a `pom.xml` at the root. The branch:
 - changes `src/main/java/com/acme/payments/api/PaymentsClient.java`;
 - keeps the import of `com.acme.payments.internal.PaymentGateway` in `OrderController.java` under the approved
   waiver `WVR-0001` for ARCH-301 (expires 2026-12-31);
-- has an entity `Checkout` in `data-model.md`.
+- has the entity `Shipment` in `data-model.md` (not in the glossary of `orders`).
 
 The map declares no deployables, and `customers` has `modules` but no `code`.
 
 | Id | Impact | Kind | Subject | Suggestion for the next iteration | For |
 |---|---|---|---|---|---|
-| LF-2a2a5a3d | high | new-unit | acme-shop:services/notifications | Decide in the DMD whether `services/notifications` is a new deployable, or move its code into the existing unit `.` | lead architect |
 | LF-ef1129cf | high | unmapped-code | services/notifications | Map `services/notifications/**` to a context in the next map version, or declare a new context for it | lead architect |
-| LF-4fef6b49 | high | domain-change | published:payments:com.acme.payments.internal | Waived by WVR-0001 until 2026-12-31: publish the package in `contexts.payments.published`, or use `com.acme.payments.api` before then | lead architect, tech lead |
+| LF-2a2a5a3d | high | new-unit | acme-shop:services/notifications | Decide in the DMD whether `services/notifications` is a new deployable, or move its code into the existing unit `.` | lead architect |
+| LF-42456a00 | high | domain-change | waiver:WVR-0001 | Waived by WVR-0001 until 2026-12-31: refactor the code to meet ARCH-301, or change the domain map so the dependency is allowed (a relation or a published interface), before then | lead architect, tech lead |
 | LF-885c1908 | medium | cross-context | orders->payments | 1 file of `payments` changed under the customer-supplier relation: plan it as a payments backlog item owned by the Payments domain owner, or record a partnership | Payments domain owner, lead architect |
 | LF-2ba4e67d | medium | topology | orders:undeclared | Declare the deployment unit(s) of `orders` (`contexts.orders.deployable`, `deployables`) | lead architect |
-| LF-121a1954 | low | vocabulary | orders:checkout | Add `Checkout` to the glossary of `orders` (or as a synonym), or rename it in the data model | Orders domain owner, BA |
+| LF-831ba84c | low | vocabulary | orders:shipment | Add `Shipment` to the glossary of `orders` (or as a synonym), or rename it in the data model | Orders domain owner, BA |
 | LF-c90bb238 | low | map-gap | customers:no-code | Declare the code paths of `customers` so the context-boundary fitness function covers it | lead architect |
 
 **Completion Report lines written by the agent (T1):**
 
 ```text
-archiGuard: PASS after 1 repair iteration(s) · 1 waived (ARCH-301, WVR-0001)
+archiGuard: PASS after 0 repair iteration(s) · 1 waived (ARCH-301, WVR-0001)
 Loop feedback (not blocking): 7 item(s) for the domain master design - 3 high, 2 medium, 2 low
   topology: mixed - existing unit '.' (orders, payments) + NEW unit 'services/notifications' (no context)
-  details: specs/001-place-order/gates/loop-feedback.md
+  ... 4 more: specs/001-place-order/gates/loop-feedback.md
 ```
 
 **Triage and hand-over at the sprint review (T5), then sprint close (T6):**
@@ -820,7 +836,7 @@ Loop feedback (not blocking): 7 item(s) for the domain master design - 3 high, 2
 A=".specify/extensions/auditguard/scripts/bash/auditguard.sh"
 bash $A backlog --status new
 bash $A decide feedback:LF-2a2a5a3d accept --by "Lead architect" --reason "notifications becomes its own context in DMD 1.5.0"
-bash $A decide feedback:LF-121a1954 reject --by "Orders domain owner" --reason "Checkout is the UI flow, not an entity; renamed in the next spec"
+bash $A decide feedback:LF-831ba84c reject --by "Orders domain owner" --reason "Shipment moves to the fulfilment context; renamed in the next spec"
 bash $A backlog --sprint S-2026-22 --status accepted --format csv --out backlog-S-2026-22.csv   # import into the tracker
 bash $A decide feedback:LF-2a2a5a3d accept --ref ARCH-77 --by "Lead architect" --reason "created in the tracker"
 bash $A sprint close S-2026-22 --by "Roman"                                                     # seal: feedback counts

@@ -87,11 +87,17 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--save", action="store_true", help="write gates/architecture-compliance.md")
     p.add_argument("--out", help="also write the Markdown report to this file")
 
+    p = sub.add_parser("feedback", parents=[common],
+                       help="loop feedback to the domain master design (evidence, never a gate; always exits 0)")
+    p.add_argument("--save", action="store_true", help="write gates/loop-feedback.json and gates/loop-feedback.md")
+
     p = sub.add_parser("ci", parents=[common], help="CI required check: lock drift, ledger, every plugged gate once")
     p.add_argument("--all", action="store_true", help="every feature under specs/ (default when no --feature-dir)")
     p.add_argument("--implement", action="store_true", help="also verify implement for features without a sign-off")
     p.add_argument("--junit", help="write a JUnit XML report")
     p.add_argument("--out", help="write a Markdown summary (e.g. the CI job summary)")
+    p.add_argument("--feedback", action="store_true",
+                   help="also print the loop feedback of the final commit (never written, never fails the check)")
 
     p = sub.add_parser("ledger", help="the decision ledger: verify | list | add | revoke")
     lsub = p.add_subparsers(dest="action", metavar="ACTION")
@@ -206,7 +212,10 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
             return commands.cmd_report(root, cfg, _feature(root, args), args.save, as_json, args.out)
         if args.command == "ci":
             feature = _feature(root, args) if args.feature_dir else None
-            return commands.cmd_ci(root, cfg, feature, args.all, args.implement, as_json, args.junit, args.out)
+            return commands.cmd_ci(root, cfg, feature, args.all, args.implement, as_json, args.junit, args.out,
+                                   args.feedback)
+        if args.command == "feedback":
+            return commands.cmd_feedback(root, cfg, _feature(root, args), args.save, as_json)
         if args.command == "ledger":
             return commands.cmd_ledger(root, cfg, args.action, args)
         if args.command == "configure":

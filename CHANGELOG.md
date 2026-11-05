@@ -6,6 +6,41 @@ All notable changes to archiGuard are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-05
+
+### Added
+
+- **Loop feedback to the domain master design** ([docs/loop-feedback.md](docs/loop-feedback.md), specification
+  [docs/loop-feedback-specification.md](docs/loop-feedback-specification.md)): after coding, archiGuard compares the
+  files changed on the branch with the domain map and writes `specs/<feature>/gates/loop-feedback.json` and `.md`. It
+  covers seven kinds of item: `unmapped-code`, `cross-context`, `new-unit`, `topology`, `vocabulary`, `domain-change`
+  and `map-gap`. Each item has a stable `LF-` id, an observation, a short suggestion for the next iteration, the
+  people it is for, the target artefact and an impact hint. A topology answer (`existing`, `new`, `mixed`) says
+  whether the feature extended an existing build unit or created a new one. **It is evidence, never a gate:** exit
+  codes, verdicts, the iteration state and escalations are unchanged, and a test asserts this for every outcome.
+- It is computed at the end of `/speckit.implement` step B (`pass` or `escalated`; the `FEEDBACK` block is printed
+  after the result), recomputed by `archiguard handover` (manifest key `feedback`) and by `archiguard report --save`
+  (section *Loop feedback to the domain master design (not blocking)* of the compliance report).
+- `archiguard feedback [--save] [--json]` and the agent command `/speckit.archiguard.feedback`; `archiguard ci
+  --feedback` prints it for the final commit without writing it.
+- `feedback:` config section (`enabled`, `kinds`, `code`, `ignore`, `unit_markers`, `group_depth`, `repository`,
+  `domain_rules`, `max_items`, `print_items`); `configure` shows it, and its `--json` carries `feedback`.
+- Optional domain map keys `contexts.<c>.deployable` and `deployables: {<name>: {repo, root, kind}}`, read only by
+  the loop feedback; no gate reads them. The `scaffold domain-map` template shows them.
+
+### Changed
+
+- The preset's `/speckit.implement` step B and the `implementgate` hook command tell the agent to copy the
+  `FEEDBACK` summary into the Completion Report, and never to edit the feedback files or act on the items.
+  `handover` and `report` say the same. The `archiguard-sdd` PR approval gate names the loop feedback.
+- The A0.4 term check moved into `gates/a0.unknown_terms`, which the loop feedback reuses. The A0.4 result is
+  unchanged.
+
+### Fixed
+
+- `ledger add` takes the `created` date from the same source as the expiry checks, so `ARCHIGUARD_TODAY` (workstation
+  only, never CI) fixes both.
+
 ## [0.1.1] - 2026-10-07
 
 ### Added
