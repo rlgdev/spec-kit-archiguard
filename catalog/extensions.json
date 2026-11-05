@@ -21,7 +21,7 @@
         "speckit_version": ">=1.0.1"
       },
       "provides": {
-        "commands": 11,
+        "commands": 12,
         "hooks": 6,
         "events": 2
       },

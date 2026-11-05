@@ -111,6 +111,9 @@ hash. Commit it. The agent, every checker and CI read the rules from the lock on
   a new tag, a changed profile.
 - Excluding a `must` rule needs an approved, unexpired ledger entry that names the rule:
   `exclude: [{ rule: ARCH-118, waiver: ADR-0042 }]`.
+- `archiguard show` lists the skills the lock binds the project to: every skill with a rule in the lock, its
+  `SKILL.md`, its rules and the profile, pack or `include` that selects each; the skills of the rulebook the lock
+  leaves out; the excluded rules; and whether the lock still equals what `resolve` would write. It changes nothing.
 
 For each feature, A3.1 filters the lock by the repository's stack and the feature's home context and
 writes `specs/<feature>/gates/applicable-rules.json`: the rules the plan must meet, and the rules

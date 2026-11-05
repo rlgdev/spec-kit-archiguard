@@ -118,6 +118,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("configure", parents=[common], help="apply the config to Spec Kit's hooks and show what is in force")
     p.add_argument("--dry-run", action="store_true")
 
+    sub.add_parser("show", parents=[common], help="the setup in force and the rulebook skills it binds, read-only "
+                                                  "(--verbose: every rule's text and checks)")
+
     sub.add_parser("edit-guard", parents=[common], help="A4.2 hook: reads the agent's tool payload on stdin")
 
     p = sub.add_parser("scaffold", parents=[common], help="write a starting file: domain-map | handover | rulebook")
@@ -212,6 +215,12 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
         if args.command == "configure":
             text, data = run_configure(root, cfg, args.dry_run)
             print(json.dumps(data, indent=2) if as_json else text)
+            return EXIT_PASS
+        if args.command == "show":
+            from .show import run_show
+
+            text, data = run_show(root, cfg, args.verbose)
+            print(json.dumps(data, indent=2, ensure_ascii=False) if as_json else text)
             return EXIT_PASS
         if args.command == "scaffold":
             return commands.cmd_scaffold(root, cfg, args.what, args.out, _feature(root, args, required=False), args.force)

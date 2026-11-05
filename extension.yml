@@ -56,6 +56,9 @@ provides:
     - name: speckit.archiguard.configure
       file: commands/speckit.archiguard.configure.md
       description: "Apply archiguard-config.yml (inline or hooks, budgets, plugged gates) and show what is in force"
+    - name: speckit.archiguard.show
+      file: commands/speckit.archiguard.show.md
+      description: "Show the setup in force and every skill of the rulebook it binds (SKILL.md, rules, why each is selected), read-only"
     - name: speckit.archiguard.editguard
       file: commands/speckit.archiguard.editguard.md
       description: "(agent event) A4.2 edit guard: blocks edits of read-only artefacts and reports rule violations of an edit"

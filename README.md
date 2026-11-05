@@ -156,11 +156,44 @@ bash $A scaffold domain-map         # starting files, if you have none yet: doma
 bash $A validate-standards          # lint the rulebook
 bash $A resolve                     # -> .specify/archiguard/standards.lock.yml (commit it)
 bash $A rules --feature-dir specs/001-place-order    # what applies to a feature
+bash $A show                        # the setup in force and every skill the lock binds (read-only)
 ```
 
 The gates read the rules from the lock, never from the rulebook directly. CI re-resolves and fails on
 drift, so a rule change reaches a project only through a reviewed lock change.
 [docs/standards.md](docs/standards.md) describes the rulebook format and every check kind.
+
+### See the setup and the skills
+
+`archiguard show` (`/speckit.archiguard.show` in the agent) prints what `configure` reports, without writing
+anything, and then every skill the project is bound to: each skill with a rule in the lock, its `SKILL.md` and
+description, its rules (level, where they are checked, declared check or agent judgement, the profile, pack or
+`include` that selects them, the stack or context they are limited to), the skills of the rulebook the lock leaves
+out, the excluded rules with their waivers, and whether the lock still equals what `resolve` would write now.
+
+```text
+$ archiguard show
+archiGuard 0.1.1 | show
+  ...
+  Skills:
+    stacks        : java (detected)
+    in force      : 6 skills, 6 rules from .specify/archiguard/standards.lock.yml (acme-standards@v2026.10.1; profile java-service; pack payments-pci)
+
+    layering               1 rule    .specify/standards/skills/layering/SKILL.md
+      Layered architecture inside a bounded context. Read before placing any class.
+      ARCH-201   must   Layers depend downwards only (api -> application -> domain)  [plan, code · declared check · via profile:java-service · stack java]
+
+    payments-pci           1 rule    .specify/standards/skills/payments-pci/SKILL.md
+      Card data handling for the payments context.
+      ARCH-601   must   Card numbers are never logged  [code · declared check · via pack:payments-pci · context payments]
+    ...
+    not in force  : none - every skill of acme-standards has a rule in force
+    rulebook drift: none - the lock equals what 'archiguard resolve' would write now
+```
+
+`--verbose` adds each rule's text and checks; `--json` gives the same as data. Hooks that differ from the config
+are named (`configure` applies them), and so are a missing or stale lock, drift from the rulebook and a `SKILL.md`
+missing from the standards checkout. It always exits `0`.
 
 ## What a failure looks like
 
@@ -240,6 +273,7 @@ green run resets it.
 | Command | What it does |
 |---------|--------------|
 | `/speckit.archiguard.configure` | apply `archiguard-config.yml` to Spec Kit's hooks and show what is in force |
+| `/speckit.archiguard.show` | the setup in force and every skill of the rulebook it binds, read-only ([more](#see-the-setup-and-the-skills)) |
 | `/speckit.archiguard.rules` | the rules that apply to the feature and the contract the plan must meet |
 | `/speckit.archiguard.handover` | handover 4 → 5 |
 | `/speckit.archiguard.report` | the architecture compliance report (`gates/architecture-compliance.md`) |

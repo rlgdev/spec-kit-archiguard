@@ -101,7 +101,13 @@ def scope_in_pipeline(cfg: Config) -> bool:
     return False
 
 
-def run_configure(root: Path, cfg: Config, dry_run: bool) -> Tuple[str, Dict[str, Any]]:
+def run_configure(root: Path, cfg: Config, dry_run: bool, show: bool = False) -> Tuple[str, Dict[str, Any]]:
+    """Apply the config to the hook registry and report what is in force.
+
+    show=True is the read-only view of `archiguard show`: nothing is written, the hook table shows the state the
+    registry is in, and the hooks that differ from the config are named with the command that applies them.
+    """
+    dry_run = dry_run or show
     eff, note = effective_integration(root, cfg)
     uses_scope = scope_in_pipeline(cfg)
 
@@ -139,8 +145,9 @@ def run_configure(root: Path, cfg: Config, dry_run: bool) -> Tuple[str, Dict[str
     else:
         changed = []
 
+    title = "show" if show else f"configure{' (dry run)' if dry_run else ''}"
     lines = [
-        f"archiGuard {__version__} | configure{' (dry run)' if dry_run else ''}",
+        f"archiGuard {__version__} | {title}",
         f"config: {', '.join(rel_path(Path(s), root) if not s.startswith('env ') else s for s in cfg.sources) or 'built-in defaults'}",
         "",
         f"  integration   : {cfg['integration']}" + (f" -> running as '{eff}'" if eff != cfg["integration"] else ""),
@@ -170,9 +177,18 @@ def run_configure(root: Path, cfg: Config, dry_run: bool) -> Tuple[str, Dict[str
         lines.append("")
         lines.append("  Hooks in .specify/extensions.yml:")
         for f in found:
-            change = "" if f["was"] == f["now"] else f"   (was {'on' if f['was'] else 'off'})"
-            lines.append(f"    {f['extension']:<11} {f['event']:<17} {f['command']:<34} {'on' if f['now'] else 'off'}{change}")
-        lines.append(f"  {len(changed)} hook setting(s) {'would change' if dry_run else 'changed'}.")
+            if show:
+                state = f["was"]
+                change = "" if f["was"] == f["now"] else f"   (the config wants it {'on' if f['now'] else 'off'})"
+            else:
+                state = f["now"]
+                change = "" if f["was"] == f["now"] else f"   (was {'on' if f['was'] else 'off'})"
+            lines.append(f"    {f['extension']:<11} {f['event']:<17} {f['command']:<34} {'on' if state else 'off'}{change}")
+        if show:
+            lines.append("  Every hook matches the config." if not changed else
+                         f"  {len(changed)} hook setting(s) differ from the config - run 'archiguard configure' to apply the config.")
+        else:
+            lines.append(f"  {len(changed)} hook setting(s) {'would change' if dry_run else 'changed'}.")
     elif not ext_yml.is_file():
         lines.append(f"  NOTE: {EXTENSIONS_YML.as_posix()} not found - is the archiguard extension installed here?")
 
@@ -245,7 +261,7 @@ def run_configure(root: Path, cfg: Config, dry_run: bool) -> Tuple[str, Dict[str
         lines.append(f"  NOTE: {n}")
 
     data = {
-        "tool": "archiguard", "version": __version__, "command": "configure", "dry_run": dry_run,
+        "tool": "archiguard", "version": __version__, "command": "show" if show else "configure", "dry_run": dry_run,
         "integration": cfg["integration"], "effective_integration": eff, "note": note,
         "hooks": found, "changed": len(changed), "scope_in_pipeline": uses_scope, "readiness": readiness,
     }

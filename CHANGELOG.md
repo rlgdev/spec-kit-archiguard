@@ -6,6 +6,19 @@ All notable changes to archiGuard are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **`archiguard show`** and the agent command `/speckit.archiguard.show`: the setup in force, read-only. It prints
+  what `configure` reports (integration, mode, the gates and budgets of each command, the hooks, the policy files)
+  without writing `.specify/extensions.yml` - hooks that differ from the config are named with `configure` as the
+  fix - and then the **skills**: every skill of the rulebook with a rule in the standards lock, with its `SKILL.md`,
+  its description, its rules (level, targets, declared check or agent judgement, the profile, pack or `include`
+  that selects it, the stack or context it is limited to, a stack not detected in the repository), the rules of a
+  partly selected skill that are not in force, the skills the lock leaves out, the excluded rules with their
+  waivers, and the drift between the lock and what `resolve` would write now. Without a lock it lists the
+  rulebook's skills and marks the ones `resolve` would select. `--verbose` adds every rule's text and checks;
+  `--json` gives the same as data. Exit `0`.
+
 ## [0.1.1] - 2026-10-07
 
 ### Added
