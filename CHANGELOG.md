@@ -6,6 +6,12 @@ All notable changes to archiGuard are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-08
+
+`archiguard show` lists the setup in force and the rulebook skills the project is bound to, and archiGuard gets
+along with the other extensions of a project: it names their hooks a stopped command skips, keeps the line endings
+of Spec Kit's files, reads long hook descriptions without PyYAML, and no longer hides other catalogs.
+
 ### Added
 
 - **`archiguard show`** and the agent command `/speckit.archiguard.show`: the setup in force, read-only. It prints
