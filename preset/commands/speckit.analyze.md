@@ -18,5 +18,10 @@ Then run archiGuard's A3.6 check from the repository root (the variant that matc
 - `ps`: `.specify/extensions/archiguard/scripts/powershell/archiguard.ps1 check A3 A3.6 --feature-dir <FEATURE_DIR>`
 - `py`: `python .specify/extensions/archiguard/scripts/python/archiguard.py check A3 A3.6 --feature-dir <FEATURE_DIR>`
 
+If the error says a file under `.specify/extensions/archiguard/` does not exist (`No such file or directory`,
+`can't open file`, `is not recognized`), archiGuard is not installed here: report `archiGuard not installed -
+skipped (remove the preset: specify preset remove archiguard-templates)` and skip this section (the report file
+is for archiGuard only). Any other error: show it and say the A3.6 check did not run.
+
 Report its result in one line. Exit 1 means CRITICAL findings remain: the design authority will not sign the plan
 until they are resolved (fix spec, plan or tasks and run this command again).

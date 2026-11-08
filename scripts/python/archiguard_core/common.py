@@ -100,6 +100,17 @@ def write_text(path: Path, text: str) -> None:
         handle.write(text)
 
 
+def line_ending(path: Path) -> str:
+    """The line ending most lines of an existing file use (CRLF or LF; LF on a tie). A rewrite of a file another tool
+    owns (Spec Kit writes .specify/extensions.yml with the platform's ending) keeps it, so git shows only the edited
+    lines."""
+    try:
+        data = path.read_bytes()
+        return "\r\n" if 2 * data.count(b"\r\n") > data.count(b"\n") else "\n"
+    except OSError:
+        return "\n"
+
+
 def write_json(path: Path, data: Any) -> None:
     write_text(path, json.dumps(data, indent=2, ensure_ascii=False, sort_keys=False) + "\n")
 

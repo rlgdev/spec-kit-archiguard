@@ -211,6 +211,19 @@ def test_configure_switches_hooks_and_keeps_other_extensions(project, ag):
     assert "0 hook setting(s) would change" in r.out, r
 
 
+def test_configure_keeps_crlf_line_endings(project, ag):
+    """Spec Kit writes .specify/extensions.yml with CRLF on Windows: configure keeps them, so git shows one line."""
+    before = EXTENSIONS_YML.replace("\n", "\r\n").encode("utf-8")
+    (project / ".specify" / "extensions.yml").write_bytes(before)
+    edit(project, CFG, "      - { gate: A3, run: [A3.1] }", "      - { gate: A3, run: [A3.1] }\n      - { gate: scope, run: [inventory] }")
+    r = ag(project, "configure", feature=False)
+    assert r.code == 0, r
+    after = (project / ".specify" / "extensions.yml").read_bytes()
+    assert b"\n" not in after.replace(b"\r\n", b""), after          # every line still ends with CRLF
+    changed = [(a, b) for a, b in zip(before.split(b"\r\n"), after.split(b"\r\n")) if a != b]
+    assert changed == [(b"    enabled: true   # scopeGuard's own hook", b"    enabled: false")]
+
+
 def test_test_loop_traces_ids_declared_in_the_test_source(project, ag):
     """JUnit names carry no ids; @Tag annotations and comments next to the test method do."""
     implemented(ag, project)
