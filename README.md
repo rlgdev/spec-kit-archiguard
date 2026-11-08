@@ -96,11 +96,11 @@ From your Spec Kit project root:
 
 ```bash
 # 1. the extension: the gate runner, the checkers, the commands, hooks and the edit guard, the config files
-specify extension add archiguard --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.2.0/archiguard.zip
+specify extension add archiguard --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.3.0/archiguard.zip
 
 # 2. the preset: makes the gates steps of /speckit.plan, /speckit.tasks and /speckit.implement,
 #    saves the /speckit.analyze report, and adds the archiGuard sections to the plan and tasks templates
-specify preset add --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.2.0/archiguard-preset.zip
+specify preset add --from https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.3.0/archiguard-preset.zip
 
 # 3. the scope gate's engine (do NOT add the scopeguard-templates preset: archiGuard wraps the commands).
 #    With scopeGuard 0.4+, set 'integration: embedded' in .specify/extensions/scopeguard/scopeguard-config.yml
@@ -195,7 +195,7 @@ out, the excluded rules with their waivers, and whether the lock still equals wh
 
 ```text
 $ archiguard show
-archiGuard 0.2.0 | show
+archiGuard 0.3.0 | show
   ...
   Skills:
     stacks        : java (detected)
@@ -224,7 +224,7 @@ code has two planted violations.
 
 ```text
 $ archiguard run plan b
-archiGuard 0.2.0 | speckit.plan · step B | feature: specs/001-place-order | iteration 0 (budget 3)
+archiGuard 0.3.0 | speckit.plan · step B | feature: specs/001-place-order | iteration 0 (budget 3)
   [PASS] A0 · A0.5 relations in the plan
   [PASS] A0 · A0.4 vocabulary                   1 finding(s), report mode
   [FAIL] A3 · A3.3 check-plan                   1 blocking
@@ -430,7 +430,7 @@ and verifies the ledger. It never loops and never writes evidence.
 python .specify/extensions/archiguard/scripts/python/archiguard.py ci --junit reports/archiguard.xml
 ```
 
-[docs/ci.md](docs/ci.md) has a GitHub Actions job (or `uses: rlgdev/spec-kit-archiguard@v0.2.0`) and a
+[docs/ci.md](docs/ci.md) has a GitHub Actions job (or `uses: rlgdev/spec-kit-archiguard@v0.3.0`) and a
 Bitbucket Pipelines step.
 
 ## What archiGuard does and does not prove

@@ -6,6 +6,12 @@ All notable changes to archiGuard are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-08
+
+Two features planned in parallel, released together: the scope stamp of scopeGuard 0.5 runs in the pipeline, and
+the loop feedback to the domain master design (planned as 0.2.0; 0.2.0 shipped `archiguard show` first) reports
+after implement what the code did to the domain map, as evidence, never as a gate.
+
 ### Added
 
 - **The scope stamp (scopeGuard 0.5).** The default pipeline runs `scope [stamp, inventory]` in step A of

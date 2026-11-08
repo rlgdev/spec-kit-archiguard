@@ -1,6 +1,6 @@
 # Loop feedback to the domain master design — Specification v1.0
 
-> **Status:** implemented in archiGuard 0.2.0, auditGuard 0.3.0 and Guardians 0.2.0, with the proposed defaults of
+> **Status:** implemented in archiGuard 0.3.0 (planned as 0.2.0; 0.2.0 shipped `archiguard show` first), auditGuard 0.3.0 and Guardians 0.2.0, with the proposed defaults of
 > section 10. Where the body below differs, the amendment wins. User documentation: [loop-feedback.md](loop-feedback.md).
 
 | | |
@@ -24,7 +24,7 @@
 | A7 | FR-202, §5.3 | The agent copies the block's first line, its `topology:` line and its last line (`details:` or `... more:`). In the block, each suggestion is cut to fit 200 characters. | A short, stable Completion Report; the file holds the full text. |
 | A8 | FR-105 | The A0.4 term logic moved into `gates/a0.unknown_terms`, which A0.4 and the feedback share. The A0.4 results are unchanged. | One definition of a term outside the glossary. |
 | A9 | FR-402, §5.4 (auditGuard) | Feedback events refer to the snapshot of `loop-feedback.json` through `file_fingerprint`, carried by the `report.saved` event of that file version. `occurrences` is stored as a count. | One snapshot per file version, not one per item. |
-| A10 | FR-504, FR-505 (auditGuard) | The loop-feedback sections of `trail.md`, `sprint.md` and the feature pages appear once any feedback is recorded. Also added: the agent command `/speckit.auditguard.backlog`, `feedback_recorded` in `configure --json`, and a `feedback` filter and the pending triage in the viewer. `--ref` is refused on any subject other than `feedback:`. | Projects without archiGuard 0.2 see unchanged views. |
+| A10 | FR-504, FR-505 (auditGuard) | The loop-feedback sections of `trail.md`, `sprint.md` and the feature pages appear once any feedback is recorded. Also added: the agent command `/speckit.auditguard.backlog`, `feedback_recorded` in `configure --json`, and a `feedback` filter and the pending triage in the viewer. `--ref` is refused on any subject other than `feedback:`. | Projects without archiGuard 0.3 see unchanged views. |
 | A11 | §8.1 (auditGuard example) | `tools/make-example.py` sets `ARCHIGUARD_TODAY` to the story's clock. For that, `archiguard ledger add` now takes `created` from the same date source as the expiry checks. The example's triage accepts `LF-2ba4e67d` (with `--ref ARCH-77`), defers `LF-831ba84c`, and ships `audit/backlog-S-2026-22.csv`. | A deterministic example: the waiver in the story would otherwise expire on the real clock. |
 
 ---
@@ -102,7 +102,7 @@ Runtime topology discovery (parsing Kubernetes or Helm manifests beyond recognis
 
 ## 2. User stories
 
-Priorities: P1 ships in archiGuard 0.2.0 / auditGuard 0.3.0, P2 in 0.2.x / 0.3.x.
+Priorities: P1 ships in archiGuard 0.3.0 / auditGuard 0.3.0, P2 in their 0.3.x releases.
 
 ### US1: See after coding what the DMD does not know (P1)
 As a lead architect, I want every feature to report, when coding is done, the code, units, relations and terms
@@ -416,7 +416,7 @@ with data; `<...>` are placeholders. A kind can be switched off through `feedbac
 
 ### 3.9 Guardians (FR-6xx)
 
-- **FR-601** The bundle pins archiGuard `0.2.0` and auditGuard `0.3.0` (the versions that ship this feature).
+- **FR-601** The bundle pins archiGuard `0.3.0` and auditGuard `0.3.0` (the versions that ship this feature).
 - **FR-602** `guardians verify` gains `loop_feedback_recorded`:
   - `[OK]`: archiGuard `feedback.enabled` is true and auditGuard collects it;
   - `[WARN]`: archiGuard writes the feedback but auditGuard is older than `0.3.0` or has
@@ -442,7 +442,7 @@ with data; `<...>` are placeholders. A kind can be switched off through `feedbac
 - **NFR-006 Compatibility.**
   - auditGuard 0.2.x ignores the file, because it has no `step` key.
   - archiGuard 0.1.x ignores the new map keys (unknown context keys are not validated today).
-  - The sibling version ranges (`collectors.archiguard.version: ">=0.1,<0.3"`) already admit archiGuard 0.2.0.
+  - auditGuard 0.3.0 widens `collectors.archiguard.version` to `">=0.1,<0.4"`, so it admits archiGuard 0.3.0.
 - **NFR-007 No network.** Everything is local. The repository name comes from the local git config.
 - **NFR-008 Standard library only**, Python ≥ 3.9. The launchers are unchanged.
 
@@ -457,7 +457,7 @@ with data; `<...>` are placeholders. A kind can be switched off through `feedbac
   "tool": "archiguard",
   "kind": "loop-feedback",
   "schema": 1,
-  "guardrail_version": "0.2.0",
+  "guardrail_version": "0.3.0",
   "feature": "specs/001-place-order",
   "status": "evaluated",
   "computed_at": "2026-11-12T16:40:03+01:00",
@@ -507,7 +507,7 @@ with data; `<...>` are placeholders. A kind can be switched off through `feedbac
 # Loop feedback - specs/001-place-order
 
 Not blocking: what this feature did that the domain master design does not describe, for the next iteration.
-archiGuard 0.2.0 · after implement step B · commit 0e334be · domain map 1.4.0 · repository acme-shop
+archiGuard 0.3.0 · after implement step B · commit 0e334be · domain map 1.4.0 · repository acme-shop
 
 ## Topology: new service or existing one?
 
@@ -763,7 +763,7 @@ auditguard backlog [--sprint S | --all] [--status new,deferred,accepted,in-backl
 
 1. archiGuard: config section, optional map keys, `feedback.py` with the kinds and the topology, files, `feedback`
    command.
-2. archiGuard: runner, handover, report, preset and workflow text, docs. Release `0.2.0`.
+2. archiGuard: runner, handover, report, preset and workflow text, docs. Release `0.3.0`.
 3. auditGuard: collector, events, views, `decide feedback:`, `backlog`, seal. Release `0.3.0`.
 4. Guardians: pins and verify check. Release `0.2.0`.
 
