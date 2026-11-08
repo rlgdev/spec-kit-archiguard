@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from ..common import (
     ArchiGuardError,
@@ -167,15 +167,14 @@ def _entity_names(ctx: GateContext) -> List[tuple]:
     return names
 
 
-def check_a0_4(ctx: GateContext, res: CheckResult) -> None:
-    """Vocabulary: key entity and contract names are glossary terms of the home context (or declared synonyms)."""
-    h = ctx.require_handover()
-    dm = ctx.require_domain_map()
-    home, _ = h.home_context()
-    if home is None or home not in dm.contexts:
-        raise ArchiGuardError("A0.4 needs a valid home context (run A0.2 first)")
+def unknown_terms(ctx: GateContext, dm: Any, home: str) -> List[tuple]:
+    """(name, where) of the entity and contract names that are not terms of `home` or a related context.
+
+    The A0.4 check and the loop feedback (vocabulary kind) share this, so both judge a term the same way.
+    """
     vocab = {_norm(t) for t in dm.vocabulary(home)}
     suffixes = ctx.cfg.option("A0.4", "strip_suffixes", _SUFFIXES_DEFAULT) or []
+    out: List[tuple] = []
     for name, where in _entity_names(ctx):
         candidates = {_norm(name)}
         base = name
@@ -187,9 +186,21 @@ def check_a0_4(ctx: GateContext, res: CheckResult) -> None:
             if c.endswith("s") and len(c) > 3:
                 candidates.add(c[:-1])
         if not candidates & vocab:
-            res.add(Finding(rule="A0.4", where=where,
-                            message=f"'{name}' is not a term of context '{home}' (glossary, owned entities, synonyms) or of a related context",
-                            fix_hint=f"use the ubiquitous language of '{home}': {', '.join(sorted(dm.contexts[home].glossary)[:12])}"))
+            out.append((name, where))
+    return out
+
+
+def check_a0_4(ctx: GateContext, res: CheckResult) -> None:
+    """Vocabulary: key entity and contract names are glossary terms of the home context (or declared synonyms)."""
+    h = ctx.require_handover()
+    dm = ctx.require_domain_map()
+    home, _ = h.home_context()
+    if home is None or home not in dm.contexts:
+        raise ArchiGuardError("A0.4 needs a valid home context (run A0.2 first)")
+    for name, where in unknown_terms(ctx, dm, home):
+        res.add(Finding(rule="A0.4", where=where,
+                        message=f"'{name}' is not a term of context '{home}' (glossary, owned entities, synonyms) or of a related context",
+                        fix_hint=f"use the ubiquitous language of '{home}': {', '.join(sorted(dm.contexts[home].glossary)[:12])}"))
 
 
 _NONE_WORDS = {"none", "n/a", "na"}

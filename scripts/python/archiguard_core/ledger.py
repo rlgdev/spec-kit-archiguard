@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from .common import ArchiGuardError, canonical_json, parse_date, read_text, sha256_text
+from .common import ArchiGuardError, canonical_json, parse_date, read_text, sha256_text, today
 
 GENESIS = "0" * 64
 STATUSES = ("proposed", "approved", "revoked", "superseded")
@@ -190,7 +190,7 @@ def make_entry(*, entry_id: str, entry_type: str, title: str, rules: List[str], 
         "owner": owner,
         "approver": approver,
         "evidence": evidence,
-        "created": created or _dt.date.today().isoformat(),
+        "created": created or today().isoformat(),   # ARCHIGUARD_TODAY on a workstation, like the expiry checks
         "expires": expires,
     }
     if features or contexts:

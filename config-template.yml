@@ -116,6 +116,22 @@ edit_guard:                  # A4.2 (Claude Code hook): read-only paths and comm
 fitness:
   provider: graph-free       # graph (Graphify behind the seam) arrives in wave 2
 
+# Loop feedback to the domain master design (docs/loop-feedback.md): evidence after coding, NEVER a gate. Computed at
+# the end of implement step B, at handover 4 -> 5 and by report --save; written to specs/<feature>/gates/loop-feedback.json
+# (+ .md): code no context maps, new build units, the undeclared topology, cross-context changes, dependencies the map
+# does not allow, glossary terms and map gaps - each with a short suggestion for the next iteration.
+feedback:
+  enabled: true
+  kinds: [unmapped-code, cross-context, new-unit, topology, vocabulary, domain-change, map-gap]
+  code: auto                 # globs of code files; auto = the source extensions of archiGuard's code analysis
+  ignore: ["specs/**", ".specify/**", "audit/**", "docs/**", ".github/**"]
+  unit_markers: [pom.xml, build.gradle, build.gradle.kts, package.json, go.mod, "*.csproj", pyproject.toml, setup.py, Cargo.toml, Dockerfile, Chart.yaml]
+  group_depth: auto          # directory depth of an unmapped-code item; auto = the depth of the domain map's code globs
+  repository: auto           # this repository's name in the map's deployables; auto = the origin remote's name
+  domain_rules: auto         # rules whose deviations / waivers are domain feedback; auto = rules with a context_boundaries check
+  max_items: 50
+  print_items: 3             # items printed in the FEEDBACK block (all of them are in the file)
+
 # Per-check settings (all optional), e.g.:
 options: {}
 #   A0.4: { strip_suffixes: [Request, Response, Dto] }

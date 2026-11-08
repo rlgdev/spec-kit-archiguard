@@ -59,6 +59,15 @@ built-in defaults  <-  archiguard-config.yml  <-  local-config.yml and ARCHIGUAR
 | `edit_guard.after_signoff` | `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, `contracts/**`, `gates/signoff.json` | read-only once the design is signed |
 | `edit_guard.human_only` | `signoff`, `reopen`, `resolve`, `ledger add`, `ledger revoke` | archiGuard subcommands an agent may not run from its shell tool |
 | `fitness.provider` | `graph-free` | `graph` is reserved for a code-graph provider in a later version |
+| `feedback.enabled` | `true` | the [loop feedback](loop-feedback.md) to the domain master design after coding: evidence, never a gate (it never changes an exit code or a verdict) |
+| `feedback.kinds` | all seven | `unmapped-code`, `cross-context`, `new-unit`, `topology`, `vocabulary`, `domain-change`, `map-gap` |
+| `feedback.code` | `auto` | globs of the files that count as code; `auto` = the source extensions of the code analysis |
+| `feedback.ignore` | `specs/**`, `.specify/**`, `audit/**`, `docs/**`, `.github/**` | never code (`options.A4.4.exclude` is honoured too) |
+| `feedback.unit_markers` | `pom.xml`, `build.gradle(.kts)`, `package.json`, `go.mod`, `*.csproj`, `pyproject.toml`, `setup.py`, `Cargo.toml`, `Dockerfile`, `Chart.yaml` | file names that make their directory a build / deployment unit |
+| `feedback.group_depth` | `auto` | directory depth of an `unmapped-code` item; `auto` = the most common depth of the domain map's `code:` globs |
+| `feedback.repository` | `auto` | this repository's name in the map's `deployables:`; `auto` = the name of the `origin` remote (else the folder name) |
+| `feedback.domain_rules` | `auto` | rules whose deviations and waivers are domain feedback; `auto` = the rules with a `context_boundaries` check |
+| `feedback.max_items` / `feedback.print_items` | `50` / `3` | items written to the file / printed in the `FEEDBACK` block |
 | `options` | `{}` | per-check settings (below) |
 
 ## The pipeline

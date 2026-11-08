@@ -166,6 +166,12 @@ def run_configure(root: Path, cfg: Config, dry_run: bool, show: bool = False) ->
         lines.append(f"  {'':<13}   step B {fmt(b)} | budget {cfg.budget(command)}")
     loops = cfg.get("loops") or {}
     lines.append(f"  loops         : {', '.join(f'{k} {v}' for k, v in loops.items()) or '-'}")
+    fb = cfg["feedback"]
+    if fb["enabled"]:
+        lines.append(f"  loop feedback : on ({len(fb['kinds'])} kinds) · after implement, handover, report"
+                     " - evidence for the domain master design, never a gate")
+    else:
+        lines.append("  loop feedback : off (feedback.enabled)")
     lines.append("")
     if eff == "inline":
         lines.append("  The gates run as steps A and B inside /speckit.plan, /speckit.tasks and /speckit.implement.")
@@ -264,5 +270,6 @@ def run_configure(root: Path, cfg: Config, dry_run: bool, show: bool = False) ->
         "tool": "archiguard", "version": __version__, "command": "show" if show else "configure", "dry_run": dry_run,
         "integration": cfg["integration"], "effective_integration": eff, "note": note,
         "hooks": found, "changed": len(changed), "scope_in_pipeline": uses_scope, "readiness": readiness,
+        "feedback": {"enabled": bool(cfg["feedback"]["enabled"]), "kinds": list(cfg["feedback"]["kinds"])},
     }
     return "\n".join(lines), data

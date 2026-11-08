@@ -6,7 +6,7 @@
     "archiguard": {
       "name": "archiGuard",
       "id": "archiguard",
-      "description": "Architecture gates for Spec Kit: A0 domain guard, A3 plan conformance, A4 fitness functions and the handover 4->5, with one gate runner, per-step iteration budgets and standards bound through a lock file.",
+      "description": "Architecture gates for Spec Kit: A0 domain guard, A3 plan conformance, A4 fitness functions and the handover 4->5, with one gate runner, per-step iteration budgets, standards bound through a lock file, and the loop feedback to the domain master design.",
       "author": "rlgdev",
       "version": "0.2.0",
       "download_url": "https://github.com/rlgdev/spec-kit-archiguard/releases/download/v0.2.0/archiguard.zip",

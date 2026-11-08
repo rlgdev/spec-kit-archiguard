@@ -4,7 +4,7 @@ extension:
   id: archiguard
   name: "archiGuard"
   version: "0.2.0"
-  description: "Architecture gates for Spec Kit: A0 domain guard, A3 plan conformance, A4 fitness functions and the handover 4->5, with one gate runner, per-step iteration budgets and standards bound through a lock file"
+  description: "Architecture gates for Spec Kit: A0 domain guard, A3 plan conformance, A4 fitness functions and the handover 4->5, with one gate runner, per-step iteration budgets, standards bound through a lock file, and the loop feedback to the domain master design"
   author: "rlgdev"
   repository: https://github.com/rlgdev/spec-kit-archiguard
   homepage: https://github.com/rlgdev/spec-kit-archiguard
@@ -50,6 +50,9 @@ provides:
     - name: speckit.archiguard.report
       file: commands/speckit.archiguard.report.md
       description: "Architecture compliance report for the feature (verdicts, waivers, sign-off, test loop)"
+    - name: speckit.archiguard.feedback
+      file: commands/speckit.archiguard.feedback.md
+      description: "Loop feedback to the domain master design: what the feature did that the domain map does not describe (never a gate)"
     - name: speckit.archiguard.rules
       file: commands/speckit.archiguard.rules.md
       description: "Show the architecture rules that apply to the feature and the contract the plan must meet"

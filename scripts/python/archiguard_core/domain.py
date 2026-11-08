@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import posixpath
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -30,6 +31,16 @@ class Context:
     modules: List[str]       # import prefixes (packages / namespaces) of the context
     published: List[str]     # import prefixes or path globs other contexts may use
     packs: List[str]         # rulebook packs this context pulls in
+    deployable: List[str] = field(default_factory=list)   # deployables the context runs in (loop feedback only)
+
+
+@dataclass
+class Deployable:
+    """A build / deployment unit the domain master design declares (read by the loop feedback only)."""
+    name: str
+    repo: Optional[str]      # repository name; None = this repository
+    root: str                # unit root inside the repository ("." = the repository root)
+    kind: Optional[str]      # service | library | job | frontend | other
 
 
 @dataclass
@@ -71,6 +82,7 @@ class DomainMap:
                 modules=[str(x) for x in (c.get("modules") or [])],
                 published=[str(x) for x in (c.get("published") or [])],
                 packs=[str(x) for x in (c.get("packs") or [])],
+                deployable=_names(c.get("deployable")),
             )
         self.relations: List[Relation] = []
         for r in data.get("relations") or []:
@@ -80,6 +92,20 @@ class DomainMap:
             if not src or not dst or not rtype:
                 raise ArchiGuardError(f"{path}: relation {r} needs from, to and type")
             self.relations.append(Relation(str(src), str(dst), str(rtype), [str(v) for v in (r.get("via") or [])]))
+        # optional topology (loop feedback only): never validated here, so no gate depends on it (D8)
+        self.deployables: Dict[str, Deployable] = {}
+        self.topology_problems: List[str] = []
+        raw_deployables = data.get("deployables")
+        self.has_deployables = raw_deployables is not None
+        if raw_deployables is not None and not isinstance(raw_deployables, dict):
+            self.topology_problems.append("deployables must be a mapping of name to {repo, root, kind}")
+        elif isinstance(raw_deployables, dict):
+            for name, d in raw_deployables.items():
+                d = d if isinstance(d, dict) else {}
+                root = str(d.get("root") or ".").replace("\\", "/").strip("/") or "."
+                self.deployables[str(name)] = Deployable(
+                    name=str(name), repo=(str(d["repo"]) if d.get("repo") else None),
+                    root=posixpath.normpath(root), kind=(str(d["kind"]) if d.get("kind") else None))
 
     # ---------------------------------------------------------------- checks
     def problems(self) -> List[str]:
@@ -176,6 +202,14 @@ class DomainMap:
             if name == ctx:
                 terms.extend(c.synonyms.keys())
         return terms
+
+
+def _names(value: Any) -> List[str]:
+    if value is None or value == "":
+        return []
+    if isinstance(value, (list, tuple)):
+        return [str(v) for v in value if v not in (None, "")]
+    return [str(value)]
 
 
 def _module_has_prefix(module: str, prefix: str) -> bool:
