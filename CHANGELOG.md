@@ -6,6 +6,23 @@ All notable changes to archiGuard are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **The scope stamp (scopeGuard 0.5).** The default pipeline runs `scope [stamp, inventory]` in step A of
+  `/speckit.plan`: the first run stamps the scope of `spec.md` (`specs/<feature>/scopeguard-stamp.json`); a spec
+  that moved since the stamp without a recorded reason stops the step for a person (exit `3`). The adapter maps
+  scopeGuard's `"repairable": false` items and findings (a stamped ID removed from `spec.md`, one added after the
+  stamp) to a non-repairable check, so step B escalates at once instead of spending the budget, and the escalation
+  note names the decision (`scopeguard stamp --reason`, or restore `spec.md`). The `scope` manifest gains the `stamp`
+  check (`target: spec`, `repairable: false`).
+- `edit_guard.always_readonly` covers `specs/*/scopeguard-stamp.json`: the agent may neither re-stamp nor delete
+  the stamp. The preset wraps name the stamp among the files never edited to make a gate pass.
+
+### Changed
+
+- `gates.scope.version` accepts scopeGuard `>=0.3.0,<0.6` (was `<0.5`); CI tests the integration and the
+  end-to-end install against scopeGuard 0.5.0.
+
 ## [0.2.0] - 2026-11-08
 
 `archiguard show` lists the setup in force and the rulebook skills the project is bound to, and archiGuard gets

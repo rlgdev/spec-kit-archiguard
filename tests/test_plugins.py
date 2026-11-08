@@ -25,6 +25,10 @@ open(os.path.join(os.path.dirname(__file__), "calls.log"), "a").write(" ".join(a
 if check == "inventory":
     print("SCOPE CONTRACT\n  US1 Place an order"); sys.exit(0)
 mode = os.environ.get("FAKE_SG", "violation")
+if check == "stamp":
+    if mode == "stamp-refused":
+        print("scopeGuard 0.5.0 | scope stamp | feature: x\n  spec.md changed since the stamp of 2026-10-30:\n    - US3  Pay  (removed from spec.md)\n\n  REFUSED: a scope change after planning needs a reason"); sys.exit(1)
+    print("scopeGuard 0.5.0 | scope stamp | feature: x\n  stamped now: 7 item(s), spec.md sha256 abc..."); sys.exit(0)
 if mode == "error":
     print(json.dumps({"verdict": "error", "error": "spec.md not found"})); sys.exit(2)
 items = [{"id": "US1", "title": "Place an order", "verdict": "pass"}]
@@ -35,11 +39,19 @@ if mode == "violation":
 if mode == "deferred":
     items.append({"id": "BR-002", "title": "Request the payment", "verdict": "waived",
                   "detail": "deferred: payments not ready"})
-print(json.dumps({"verdict": "violation" if mode == "violation" else "pass", "gates": [{
-    "gate": check, "summary": "x", "fix_target": "plan.md \"## Scope Coverage\"",
-    "fix_skeleton": ["| BR-002 | Request the payment | covered | <where> | |"],
-    "items": items, "findings": []}]}))
-sys.exit(1 if mode == "violation" else 0)
+gate = {"gate": check, "summary": "x", "fix_target": "plan.md \"## Scope Coverage\"",
+        "fix_skeleton": ["| BR-002 | Request the payment | covered | <where> | |"],
+        "items": items, "findings": []}
+if mode == "unrepairable":
+    items.append({"id": "BR-002", "title": "Request the payment", "verdict": "violation", "code": "unstamped-drop",
+                  "detail": "dropped from spec.md after the scope stamp of 2026-10-30", "location": "spec.md",
+                  "spec_excerpt": "(no longer in spec.md)", "repairable": False})
+    gate["unrepairable"] = True
+    gate["stamp"] = {"file": "scopeguard-stamp.json", "stamped_at": "2026-10-30 08:00:00", "stamped_by": "inventory",
+                     "spec_sha256": "abc", "items": 7, "sealed": False, "sealed_at": None}
+failing = mode in ("violation", "unrepairable")
+print(json.dumps({"verdict": "violation" if failing else "pass", "gates": [gate]}))
+sys.exit(1 if failing else 0)
 '''
 
 
@@ -89,7 +101,7 @@ def test_scope_gate_refuses_an_unsupported_scopeguard_version(project, ag):
     install_fake_scopeguard(project, version="0.2.0")
     plug_scope(project)
     r = ag(project, "run", "plan", "b")
-    assert r.code == 2 and "does not satisfy >=0.3.0,<0.5" in r.out, r
+    assert r.code == 2 and "does not satisfy >=0.3.0,<0.6" in r.out, r
 
 
 def test_scope_gate_pinned_by_sha256(project, ag):
@@ -197,6 +209,33 @@ def test_registered_gate_that_is_not_python_is_probed_directly(project, ag):
     assert r.code == 2 and "installed version 1.2.0 does not satisfy >=2.0" in r.out, r
 
 
+def test_scopeguard_unrepairable_findings_stop_the_loop(project, ag, monkeypatch):
+    """scopeGuard 0.5+: an item marked repairable: false (the spec changed after the stamp) escalates at once."""
+    install_fake_scopeguard(project, version="0.5.0")
+    plug_scope(project)
+    monkeypatch.setenv("FAKE_SG", "unrepairable")
+    r = ag(project, "run", "plan", "b")
+    assert r.code == 3, r
+    assert "a check no agent may repair is red" in r.out and "[no repair - needs a person]" in r.out, r
+    assert "scopeguard stamp --reason" in r.out, r
+    verdict = json.loads(read(project, f"{FEATURE}/gates/scope/plan.json"))
+    assert verdict["status"] == "violation" and verdict["data"]["stamp"]["stamped_at"] == "2026-10-30 08:00:00"
+    combined = json.loads(read(project, f"{FEATURE}/gates/plan-b.json"))
+    assert combined["status"] == "escalated" and combined["history"][0]["iteration"] == 0
+
+
+def test_stamp_check_in_step_a(project, ag, monkeypatch):
+    install_fake_scopeguard(project, version="0.5.0")
+    edit(project, CFG, "      - { gate: A3, run: [A3.1] }", "      - { gate: A3, run: [A3.1] }\n      - { gate: scope, run: [stamp, inventory] }")
+    r = ag(project, "run", "plan", "a")
+    assert r.code == 0 and "stamped now: 7 item(s)" in r.out and "SCOPE CONTRACT" in r.out, r
+    monkeypatch.setenv("FAKE_SG", "stamp-refused")
+    r = ag(project, "run", "plan", "a")
+    assert r.code == 3 and "[no repair - needs a person]" in r.out, r
+    assert "spec.md changed after the scope stamp: - US3  Pay  (removed from spec.md)" in r.out, r
+    assert "scopeguard stamp --reason" in r.out
+
+
 # --------------------------------------------------------------------------- #
 # The real scopeGuard (CI checks it out; set SCOPEGUARD_SRC to run it locally)  #
 # --------------------------------------------------------------------------- #
@@ -205,7 +244,7 @@ SCOPEGUARD_SRC = os.environ.get("SCOPEGUARD_SRC", "")
 
 
 @pytest.mark.skipif(not SCOPEGUARD_SRC or not Path(SCOPEGUARD_SRC, "extension.yml").is_file(),
-                    reason="SCOPEGUARD_SRC (a scopeGuard 0.3.x or 0.4.x checkout; CI uses v0.4.1) is not set")
+                    reason="SCOPEGUARD_SRC (a scopeGuard 0.3.x to 0.5.x checkout; CI uses v0.5.0) is not set")
 def test_real_scopeguard_end_to_end(project, ag):
     src = Path(SCOPEGUARD_SRC)
     ext = project / ".specify" / "extensions" / "scopeguard"
@@ -215,9 +254,12 @@ def test_real_scopeguard_end_to_end(project, ag):
     edit(project, CFG, "      - { gate: A3, run: [A3.1] }", "      - { gate: A3, run: [A3.1] }\n      - { gate: scope, run: [inventory] }")
     plug_scope(project)
     edit(project, CFG, "        - { gate: A3, run: [A3.5] }", "        - { gate: scope, run: [tasks] }\n        - { gate: A3, run: [A3.5] }")
+    edit(project, CFG, "      - { gate: scope, run: [inventory] }", "      - { gate: scope, run: [stamp, inventory] }")
     r = ag(project, "run", "plan", "a")
     assert r.code == 0 and "SCOPE CONTRACT" in r.out, r
     assert "1 user stories, 6 requirements" in r.out      # the corporate prefixes of scope-config-template.yml
+    stamp = project / FEATURE / "scopeguard-stamp.json"
+    assert stamp.is_file() and "stamped now" in r.out, r     # scopeGuard 0.5+: step A stamps the scope
     r = ag(project, "run", "plan", "b")
     assert r.code == 1, r
     assert "[plan] BR-002" in r.out and "request the payment of the order total" in r.out
@@ -230,7 +272,15 @@ def test_real_scopeguard_end_to_end(project, ag):
     assert r.code == 0, r
     r = ag(project, "run", "tasks", "b")
     assert r.code == 0, r
+    assert json.loads(stamp.read_text(encoding="utf-8"))["tasks"]["carriers"], "a passing tasks gate seals the carriers"
+    # the scope changes after the stamp: step A stops for a person, step B escalates at once (no budget spent)
+    spec = f"{FEATURE}/spec.md"
+    edit(project, spec, "- **BR-002**", "- **BR-002-moved**")
+    r = ag(project, "run", "plan", "a")
+    assert r.code == 3 and "no repair - needs a person" in r.out and "BR-002" in r.out, r
+    r = ag(project, "run", "plan", "b")
+    assert r.code == 3 and "a check no agent may repair is red" in r.out and "scopeguard stamp --reason" in r.out, r
     proc = subprocess.run([sys.executable, str(ext / "scripts" / "python" / "scopeguard.py"), "--version"],
                           capture_output=True, text=True)
     from archiguard_core.common import version_satisfies
-    assert version_satisfies((proc.stdout + proc.stderr).split()[-1], ">=0.3.0,<0.5")
+    assert version_satisfies((proc.stdout + proc.stderr).split()[-1], ">=0.3.0,<0.6")

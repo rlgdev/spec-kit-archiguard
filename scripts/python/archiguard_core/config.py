@@ -28,7 +28,7 @@ DEFAULT_PIPELINE: Dict[str, Any] = {
         "step_a": [
             {"gate": "A0", "run": ["A0.1", "A0.2", "A0.3"], "repair": False},
             {"gate": "A3", "run": ["A3.1"]},
-            {"gate": "scope", "run": ["inventory"]},
+            {"gate": "scope", "run": ["stamp", "inventory"]},
         ],
         "step_b": {
             "max_iterations": 3,
@@ -96,7 +96,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "enabled": True,
         "human_only": ["signoff", "reopen", "resolve", "ledger add", "ledger revoke"],
         "always_readonly": [".specify/standards/**", ".specify/archiguard/**", ".specify/extensions/archiguard/**",
-                            "specs/*/gates/**/*.json"],
+                            "specs/*/gates/**/*.json", "specs/*/scopeguard-stamp.json"],
         "after_handover": ["specs/*/spec.md", "specs/*/ba/**", "specs/*/handover.yml"],
         "after_signoff": ["specs/*/plan.md", "specs/*/research.md", "specs/*/data-model.md", "specs/*/quickstart.md",
                           "specs/*/contracts/**", "specs/*/gates/signoff.json"],
@@ -109,7 +109,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "gates": {
         "scope": {
             "extension": "scopeguard",
-            "version": ">=0.3.0,<0.5",
+            "version": ">=0.3.0,<0.6",
             "command": "scripts/python/scopeguard.py",
             "sha256": None,
             "config": ".specify/extensions/archiguard/scope-config.yml",

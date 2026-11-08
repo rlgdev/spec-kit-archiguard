@@ -19,7 +19,7 @@ standards a project must obey are set in one config file.
 | **A3 plan conformance** | the plan covers the spec, states how it meets every applicable rule, and cites only approved decisions | `/speckit.plan`, `/speckit.tasks`, `/speckit.analyze` |
 | **A4 fitness functions** | the code stays inside the signed plan and the rulebook | `/speckit.implement`, every agent edit |
 | **H handover 4 → 5** | the code may enter the deterministic test loop | after implement |
-| **scope** (plug-in) | no requirement is dropped, on the [scopeGuard](https://github.com/rlgdev/spec-kit-scopeguard) engine | plan, tasks, implement |
+| **scope** (plug-in) | no requirement is dropped, and the scope a feature is planned against is the one it was handed over with (the scope stamp), on the [scopeGuard](https://github.com/rlgdev/spec-kit-scopeguard) engine | plan, tasks, implement |
 
 Every gate is deterministic: plain parsing, set arithmetic, import graphs and regular expressions,
 with no LLM in the loop. The agent repairs; the script decides.
@@ -44,9 +44,9 @@ two mandatory steps:
 
 | Command | Step A, right after Setup | Step B, before the post-execution hooks and the Completion Report |
 |---------|---------------------------|-------------------------------------------------------------------|
-| `/speckit.plan` | **A0.1–A0.3** domain guard (pin, home context, entity ownership); **A3.1** the applicable rules and the contract the plan must meet; the **scope** inventory | **scope** coverage spec → plan; **A0.5** relations in the plan; **A0.4** vocabulary (report mode); **A3.3** check-plan; **A3.7** cited decisions |
-| `/speckit.tasks` | – | **scope** coverage plan → tasks; **A3.5** task guard (requirement ids, tests first, a fitness task per rule with a code check) |
-| `/speckit.implement` | **A4.1** entry pin check against the design sign-off | **scope** carrying tasks done; **A4.4** fitness functions; **A4.6** traceability |
+| `/speckit.plan` | **A0.1–A0.3** domain guard (pin, home context, entity ownership); **A3.1** the applicable rules and the contract the plan must meet; the **scope** stamp (taken on the first run; a spec that moved since stops the step for a person) and inventory | **scope** coverage spec → plan; **A0.5** relations in the plan; **A0.4** vocabulary (report mode); **A3.3** check-plan; **A3.7** cited decisions |
+| `/speckit.tasks` | – | **scope** coverage plan → tasks (on pass the carrying tasks are sealed into the stamp); **A3.5** task guard (requirement ids, tests first, a fitness task per rule with a code check) |
+| `/speckit.implement` | **A4.1** entry pin check against the design sign-off | **scope** sealed carrying tasks present and done; **A4.4** fitness functions; **A4.6** traceability |
 
 `/speckit.analyze` saves its report for **A3.6**, and the **A4.2** edit guard runs as a Claude Code
 hook on every edit. With `integration: hooks` the same steps run as separate archiGuard commands
@@ -99,7 +99,7 @@ specify preset add --from https://github.com/rlgdev/spec-kit-archiguard/releases
 
 # 3. the scope gate's engine (do NOT add the scopeguard-templates preset: archiGuard wraps the commands).
 #    With scopeGuard 0.4+, set 'integration: embedded' in .specify/extensions/scopeguard/scopeguard-config.yml
-specify extension add scopeguard --from https://github.com/rlgdev/spec-kit-scopeguard/releases/download/v0.4.1/scopeguard.zip
+specify extension add scopeguard --from https://github.com/rlgdev/spec-kit-scopeguard/releases/download/v0.5.0/scopeguard.zip
 
 # 4. apply the config: archiGuard's and scopeGuard's hooks off (inline), the edit guard wired
 bash .specify/extensions/archiguard/scripts/bash/archiguard.sh configure
@@ -318,7 +318,7 @@ pipeline:                    # the gates plugged into each command, in order
     step_a:
       - { gate: A0, run: [A0.1, A0.2, A0.3], repair: false }
       - { gate: A3, run: [A3.1] }
-      - { gate: scope, run: [inventory] }
+      - { gate: scope, run: [stamp, inventory] }
     step_b:
       max_iterations: 3      # the one budget of this insertion point
       gates:
@@ -329,7 +329,7 @@ pipeline:                    # the gates plugged into each command, in order
   # speckit.tasks, speckit.implement ...
 loops: { handover_validator: 3, implement_converge: 3, handover_entry: 3, test_loop: 3 }
 gates:                       # registered plug-in gates (archiGuard's own need no registration)
-  scope: { extension: scopeguard, version: ">=0.3.0,<0.5", command: scripts/python/scopeguard.py }
+  scope: { extension: scopeguard, version: ">=0.3.0,<0.6", command: scripts/python/scopeguard.py }
 ```
 
 - **Budgets.** A project may lower budgets, never exceed the ceiling the service team ships in
@@ -365,6 +365,11 @@ pipeline:
 
 The scope gate is plugged in the same way, through an adapter for scopeGuard's CLI. archiGuard
 switches scopeGuard's own hooks off when the scope gate is in the pipeline, so scope is checked once.
+With scopeGuard 0.5 the `stamp` check in step A of `/speckit.plan` stamps the scope of `spec.md` at
+hand-over (`specs/<feature>/scopeguard-stamp.json`, read-only for the agent); a stamped ID that `spec.md`
+lost, or one added after the stamp, comes back from the scope gate as a finding no agent may repair, so
+the runner escalates at once and the escalation note names the decision (`scopeguard stamp --reason`,
+or restore `spec.md`). A passing tasks gate seals the carrying tasks into the stamp for the implement gate.
 [docs/plugin-contract.md](docs/plugin-contract.md) has the full contract.
 
 ## Hard stops with the workflow engine
@@ -422,7 +427,7 @@ its `configure` warns while it is embedded without archiGuard.
 python -m pytest -q            # engine tests (set SCOPEGUARD_SRC to a scopeGuard checkout for the integration test)
 python tools/build.py --check  # versions, manifests and catalogs agree (CI)
 python tools/build.py          # dist/archiguard.zip, dist/archiguard-preset.zip, dist/archiguard-sdd.yml, dist/SHA256SUMS
-bash tools/e2e-speckit.sh https://github.com/rlgdev/spec-kit-scopeguard/releases/download/v0.4.1/scopeguard.zip   # install into a fresh Spec Kit project together with scopeGuard (the pin of the install step and CI; a local scopeguard.zip path works too) and drive it (needs `specify`)
+bash tools/e2e-speckit.sh https://github.com/rlgdev/spec-kit-scopeguard/releases/download/v0.5.0/scopeguard.zip   # install into a fresh Spec Kit project together with scopeGuard (the pin of the install step and CI; a local scopeguard.zip path works too) and drive it (needs `specify`)
 ```
 
 To release, bump the version in `extension.yml`, `preset/preset.yml`, the workflow,
